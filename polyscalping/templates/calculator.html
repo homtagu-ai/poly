@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+{% block title %}ROI Calculator - PolyScalping{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .calculator-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        max-width: 1000px;
+    }
+
+    @media (max-width: 900px) {
+        .calculator-layout { grid-template-columns: 1fr; }
+    }
+
+    .calc-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius);
+        padding: 24px;
+    }
+
+    .calc-card.animated-border-box {
+        border: none;
+        padding: 0;
+    }
+
+    .calc-card.animated-border-box .card-inner {
+        padding: 24px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .calc-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .calc-title-icon {
+        font-size: 24px;
+    }
+
+    .calc-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group.full {
+        grid-column: 1 / -1;
+    }
+
+    .input-with-unit {
+        position: relative;
+    }
+
+    .input-with-unit input {
+        padding-right: 50px;
+    }
+
+    .input-unit {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 13px;
+    }
+
+    .calc-btn {
+        margin-top: 8px;
+    }
+
+    .results-card {
+        background: var(--bg-secondary);
+        border-radius: var(--radius);
+        padding: 20px;
+    }
+
+    .results-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .result-item {
+        text-align: center;
+        padding: 16px;
+        background: var(--bg-card);
+        border-radius: 8px;
+    }
+
+    .result-item.highlight {
+        background: rgba(79,143,247,0.1);
+        border: 1px solid rgba(79,143,247,0.3);
+    }
+
+    .result-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    .result-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+
+    .scenarios-list {
+        margin-top: 20px;
+    }
+
+    .scenario-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .scenario-item:last-child {
+        border-bottom: none;
+    }
+
+    .scenario-label {
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .scenario-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .quick-presets {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .preset-btn {
+        padding: 6px 12px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+        background: var(--bg-card-hover);
+        border-color: var(--accent-blue);
+        color: var(--text-primary);
+    }
+
+    .formula-box {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 20px;
+    }
+
+    .formula-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .formula-code {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 13px;
+        color: var(--accent-blue);
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 900px) {
+        .calculator-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .calc-card, .calc-card.animated-border-box .card-inner {
+            padding: 16px;
+        }
+
+        .calc-title {
+            font-size: 16px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-presets {
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            flex: 1;
+            min-width: calc(50% - 8px);
+            text-align: center;
+        }
+
+        .results-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .result-value {
+            font-size: 18px;
+        }
+
+        .scenario-item {
+            flex-direction: column;
+            gap: 4px;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .formula-code {
+            font-size: 11px;
+            word-break: break-all;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header blur-fade" style="--delay: 0;">
+    <h1 class="page-title">ROI Calculator</h1>
+    <p class="page-subtitle">Calculate profit and return on investment for your trades</p>
+</div>
+
+<div class="calculator-layout">
+    <!-- Calculator Input -->
+    <div class="calc-card animated-border-box blur-fade" style="--delay: 1;">
+        <div class="card-inner">
+            <div class="calc-title">
+                <span class="calc-title-icon">&#128178;</span>
+                Trade Calculator
+            </div>
+
+            <div class="quick-presets">
+                <button class="preset-btn" onclick="setPreset(0.35, 0.50, 100)">35c &rarr; 50c</button>
+                <button class="preset-btn" onclick="setPreset(0.50, 0.75, 100)">50c &rarr; 75c</button>
+                <button class="preset-btn" onclick="setPreset(0.25, 1.00, 100)">25c &rarr; $1</button>
+                <button class="preset-btn" onclick="setPreset(0.10, 0.50, 500)">10c &rarr; 50c</button>
+            </div>
+
+            <div class="calc-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="label">Buy Price</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="input" id="buyPrice" placeholder="0.35" step="0.01" min="0" max="1">
+                            <span class="input-unit">cents</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Sell Price</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="input" id="sellPrice" placeholder="0.65" step="0.01" min="0" max="1">
+                            <span class="input-unit">cents</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Number of Shares</label>
+                    <input type="number" class="input" id="numShares" placeholder="100" min="1">
+                </div>
+
+                <button class="btn btn-gradient-animated calc-btn" onclick="calculate()">
+                    ✨ Calculate ROI
+                </button>
+            </div>
+
+            <div class="formula-box">
+                <div class="formula-title">Formula</div>
+                <div class="formula-code">
+                    ROI = ((Sell Price - Buy Price) / Buy Price) &times; 100
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="calc-card blur-fade" style="--delay: 2;">
+        <div class="calc-title">
+            <span class="calc-title-icon">&#128200;</span>
+            Results
+        </div>
+
+        <div class="results-card">
+            <div class="results-title">Trade Summary</div>
+            <div class="results-grid">
+                <div class="result-item">
+                    <div class="result-value text-blue" id="resultBuyCost">$0.00</div>
+                    <div class="result-label">Buy Cost</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value text-green" id="resultSellRevenue">$0.00</div>
+                    <div class="result-label">Sell Revenue</div>
+                </div>
+                <div class="result-item highlight">
+                    <div class="result-value" id="resultProfit">$0.00</div>
+                    <div class="result-label">Net Profit</div>
+                </div>
+                <div class="result-item highlight">
+                    <div class="result-value" id="resultROI">0%</div>
+                    <div class="result-label">ROI</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="scenarios-list">
+            <div class="results-title">Scaling Scenarios</div>
+
+            <div class="scenario-item">
+                <span class="scenario-label">With $100 investment</span>
+                <span class="scenario-value text-green" id="scenario100">-</span>
+            </div>
+            <div class="scenario-item">
+                <span class="scenario-label">With $500 investment</span>
+                <span class="scenario-value text-green" id="scenario500">-</span>
+            </div>
+            <div class="scenario-item">
+                <span class="scenario-label">With $1,000 investment</span>
+                <span class="scenario-value text-green" id="scenario1000">-</span>
+            </div>
+            <div class="scenario-item">
+                <span class="scenario-label">With $5,000 investment</span>
+                <span class="scenario-value text-green" id="scenario5000">-</span>
+            </div>
+            <div class="scenario-item">
+                <span class="scenario-label">With $10,000 investment</span>
+                <span class="scenario-value text-green" id="scenario10000">-</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function setPreset(buy, sell, shares) {
+        document.getElementById('buyPrice').value = buy;
+        document.getElementById('sellPrice').value = sell;
+        document.getElementById('numShares').value = shares;
+        calculate();
+    }
+
+    async function calculate() {
+        const buyPrice = parseFloat(document.getElementById('buyPrice').value) || 0;
+        const sellPrice = parseFloat(document.getElementById('sellPrice').value) || 0;
+        const numShares = parseFloat(document.getElementById('numShares').value) || 0;
+
+        if (buyPrice <= 0 || sellPrice <= 0 || numShares <= 0) {
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/roi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    buy_price: buyPrice,
+                    sell_price: sellPrice,
+                    num_shares: numShares
+                })
+            });
+
+            const data = await res.json();
+
+            // Update results
+            document.getElementById('resultBuyCost').textContent = '$' + data.buy_cost.toFixed(2);
+            document.getElementById('resultSellRevenue').textContent = '$' + data.sell_revenue.toFixed(2);
+
+            const profitEl = document.getElementById('resultProfit');
+            profitEl.textContent = (data.net_profit >= 0 ? '+' : '') + '$' + data.net_profit.toFixed(2);
+            profitEl.className = 'result-value ' + (data.net_profit >= 0 ? 'text-green' : 'text-red');
+
+            const roiEl = document.getElementById('resultROI');
+            roiEl.textContent = (data.roi_percent >= 0 ? '+' : '') + data.roi_percent.toFixed(1) + '%';
+            roiEl.className = 'result-value ' + (data.roi_percent >= 0 ? 'text-green' : 'text-red');
+
+            // Calculate scenarios
+            const roiDecimal = data.roi_percent / 100;
+            [100, 500, 1000, 5000, 10000].forEach(investment => {
+                const profit = investment * roiDecimal;
+                const el = document.getElementById('scenario' + investment);
+                el.textContent = (profit >= 0 ? '+' : '') + '$' + profit.toFixed(2);
+                el.className = 'scenario-value ' + (profit >= 0 ? 'text-green' : 'text-red');
+            });
+
+        } catch (e) {
+            console.error('Error calculating ROI:', e);
+        }
+    }
+
+    // Calculate on input change
+    document.querySelectorAll('.calc-form input').forEach(input => {
+        input.addEventListener('input', calculate);
+    });
+
+    // Set default values
+    setPreset(0.35, 0.65, 100);
+</script>
+{% endblock %}

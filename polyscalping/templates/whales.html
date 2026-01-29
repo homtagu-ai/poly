@@ -1,0 +1,797 @@
+{% extends "base.html" %}
+{% block title %}Whale Tracker - PolyScalping{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .whale-layout {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 24px;
+    }
+
+    @media (max-width: 1100px) {
+        .whale-layout { grid-template-columns: 1fr; }
+    }
+
+    .whale-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Tracker Card */
+    .tracker-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius);
+        padding: 20px;
+    }
+
+    .tracker-card.animated-border-box {
+        border: none;
+        padding: 0;
+    }
+
+    .tracker-card .card-inner {
+        padding: 20px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .tracker-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tracker-title .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent-purple);
+    }
+
+    .tracker-input-group {
+        margin-bottom: 12px;
+    }
+
+    .tracker-input-group label {
+        display: block;
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+    }
+
+    /* Tracked Wallets List */
+    .tracked-wallets {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .tracked-wallet-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .tracked-wallet-item:hover {
+        background: var(--bg-card-hover);
+    }
+
+    .tracked-wallet-item.active {
+        border: 1px solid var(--accent-purple);
+        background: rgba(139, 92, 246, 0.1);
+    }
+
+    .tracked-wallet-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--bg-primary);
+    }
+
+    .tracked-wallet-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tracked-wallet-address {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        color: var(--accent-blue);
+    }
+
+    .tracked-wallet-label {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .tracked-wallet-remove {
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tracked-wallet-remove:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: var(--accent-red);
+    }
+
+    /* Trades Section */
+    .trades-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    .trades-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .trades-title {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .trades-wallet-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .trades-wallet-info .avatar {
+        width: 28px;
+        height: 28px;
+    }
+
+    .trades-wallet-address {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        color: var(--accent-blue);
+    }
+
+    .trade-row {
+        display: grid;
+        grid-template-columns: 100px 1fr 100px 100px 120px;
+        align-items: center;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+        font-size: 13px;
+    }
+
+    .trade-row:hover {
+        background: var(--bg-card-hover);
+    }
+
+    .trade-row.header {
+        background: var(--bg-secondary);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+    }
+
+    .trade-row.header:hover {
+        background: var(--bg-secondary);
+    }
+
+    .trade-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+    }
+
+    .trade-type.buy { color: var(--accent-green); }
+    .trade-type.sell { color: var(--accent-red); }
+
+    .trade-market {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .trade-market-img {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: var(--bg-secondary);
+    }
+
+    .trade-market-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .trade-amount {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+    }
+
+    .trade-price {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--text-secondary);
+    }
+
+    .trade-time {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    @media (max-width: 900px) {
+        .trade-row {
+            grid-template-columns: 80px 1fr 80px 80px;
+        }
+        .trade-row > *:nth-child(5) {
+            display: none;
+        }
+    }
+
+    /* Stats Cards */
+    .whale-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    @media (max-width: 900px) {
+        .whale-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .whale-stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius);
+        padding: 20px;
+        text-align: center;
+    }
+
+    .whale-stat-icon {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+
+    .flow-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        padding: 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius);
+    }
+
+    .flow-bar {
+        flex: 1;
+        height: 12px;
+        background: var(--border);
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .flow-buyers {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-green), #34d399);
+        border-radius: 6px 0 0 6px;
+    }
+
+    .flow-sellers {
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 100%;
+        background: linear-gradient(90deg, #f87171, var(--accent-red));
+        border-radius: 0 6px 6px 0;
+    }
+
+    .flow-label {
+        min-width: 100px;
+        text-align: center;
+    }
+
+    .flow-count {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .flow-text {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .empty-trades {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-trades-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+
+    /* Main Content */
+    .whale-main {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 600px) {
+        .whale-sidebar {
+            gap: 16px;
+        }
+
+        .tracker-card .card-inner {
+            padding: 16px;
+        }
+
+        .whale-stats {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .whale-stat-card {
+            padding: 14px 10px;
+        }
+
+        .whale-stat-card .stat-value {
+            font-size: 18px;
+        }
+
+        .flow-indicator {
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+        }
+
+        .flow-bar {
+            width: 100%;
+            order: 2;
+        }
+
+        .flow-label {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            min-width: auto;
+        }
+
+        .flow-label:first-child {
+            order: 1;
+        }
+
+        .flow-label:last-child {
+            order: 3;
+        }
+
+        .trade-row {
+            grid-template-columns: 60px 1fr 70px;
+            padding: 10px 12px;
+            font-size: 12px;
+        }
+
+        .trade-row > *:nth-child(4),
+        .trade-row > *:nth-child(5) {
+            display: none;
+        }
+
+        .trade-market-img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .trades-header {
+            padding: 12px 16px;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header blur-fade" style="--delay: 0;">
+    <h1 class="page-title">Whale Tracker</h1>
+    <p class="page-subtitle">Track Polymarket traders and monitor their latest trades</p>
+</div>
+
+<div class="whale-layout">
+    <!-- Sidebar -->
+    <div class="whale-sidebar">
+        <!-- Track Wallet Card -->
+        <div class="tracker-card animated-border-box blur-fade" style="--delay: 1;">
+            <div class="card-inner">
+                <div class="tracker-title"><span class="dot"></span>Track Wallet</div>
+                <div class="tracker-input-group">
+                    <label>Wallet Address</label>
+                    <input type="text" class="input" id="walletAddress" placeholder="0x..." style="font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+                </div>
+                <div class="tracker-input-group">
+                    <label>Label (optional)</label>
+                    <input type="text" class="input" id="walletLabel" placeholder="e.g., Big Trader, Whale #1">
+                </div>
+                <button class="btn btn-gradient-animated" onclick="addTrackedWallet()" style="width: 100%;">
+                    ✨ Track Wallet
+                </button>
+            </div>
+        </div>
+
+        <!-- Tracked Wallets -->
+        <div class="tracker-card blur-fade" style="--delay: 2;">
+            <div class="tracker-title"><span class="dot" style="background: var(--accent-green);"></span>Tracked Wallets</div>
+            <div class="tracked-wallets" id="trackedWalletsList">
+                <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                    No wallets tracked yet
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Whales -->
+        <div class="tracker-card blur-fade" style="--delay: 3;">
+            <div class="tracker-title"><span class="dot" style="background: var(--accent-yellow);"></span>Top Whales (24h)</div>
+            <div id="topWhalesList">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="whale-main">
+        <!-- Stats -->
+        <div class="whale-stats blur-fade" style="--delay: 2;">
+            <div class="whale-stat-card">
+                <div class="whale-stat-icon">&#128051;</div>
+                <div class="stat-value text-purple number-ticker" id="statWhaleCount">-</div>
+                <div class="stat-label">Active Whales</div>
+            </div>
+            <div class="whale-stat-card">
+                <div class="whale-stat-icon">&#128184;</div>
+                <div class="stat-value text-green number-ticker" id="statTotalVolume">-</div>
+                <div class="stat-label">Total Volume</div>
+            </div>
+            <div class="whale-stat-card">
+                <div class="whale-stat-icon">&#128200;</div>
+                <div class="stat-value number-ticker" id="statNetFlow">-</div>
+                <div class="stat-label">Net Flow</div>
+            </div>
+            <div class="whale-stat-card">
+                <div class="whale-stat-icon">&#128100;</div>
+                <div class="stat-value number-ticker" id="statTotalWallets">-</div>
+                <div class="stat-label">Total Wallets</div>
+            </div>
+        </div>
+
+        <!-- Flow Indicator -->
+        <div class="flow-indicator blur-fade" style="--delay: 3;">
+            <div class="flow-label">
+                <div class="flow-count text-green" id="buyersCount">-</div>
+                <div class="flow-text">Buyers</div>
+            </div>
+            <div class="flow-bar">
+                <div class="flow-buyers" id="buyersBar" style="width: 50%;"></div>
+                <div class="flow-sellers" id="sellersBar" style="width: 50%;"></div>
+            </div>
+            <div class="flow-label">
+                <div class="flow-count text-red" id="sellersCount">-</div>
+                <div class="flow-text">Sellers</div>
+            </div>
+        </div>
+
+        <!-- Trades Section -->
+        <div class="trades-section blur-fade" style="--delay: 4;">
+            <div class="trades-header">
+                <div class="trades-title" id="tradesTitle">Recent Platform Activity</div>
+                <div class="trades-wallet-info" id="tradesWalletInfo" style="display: none;">
+                    <div class="avatar"><img id="tradesWalletAvatar" src="" alt=""></div>
+                    <span class="trades-wallet-address" id="tradesWalletAddress"></span>
+                </div>
+                <button class="btn btn-sm" onclick="loadTrades()" id="refreshTradesBtn">&#128260; Refresh</button>
+            </div>
+            <div class="trade-row header">
+                <div>Type</div>
+                <div>Market</div>
+                <div>Amount</div>
+                <div>Price</div>
+                <div>Time</div>
+            </div>
+            <div id="tradesBody">
+                <div class="empty-trades">
+                    <div class="empty-trades-icon">&#128202;</div>
+                    <p>Select a wallet to view trades</p>
+                    <small>Or track a new wallet using the form</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let trackedWallets = JSON.parse(localStorage.getItem('trackedWallets') || '[]');
+    let selectedWallet = null;
+
+    // Add wallet to tracking
+    function addTrackedWallet() {
+        const address = document.getElementById('walletAddress').value.trim();
+        const label = document.getElementById('walletLabel').value.trim();
+
+        if (!address || !address.startsWith('0x')) {
+            alert('Please enter a valid wallet address starting with 0x');
+            return;
+        }
+
+        // Check if already tracked
+        if (trackedWallets.find(w => w.address.toLowerCase() === address.toLowerCase())) {
+            alert('This wallet is already being tracked');
+            return;
+        }
+
+        trackedWallets.push({
+            address: address,
+            label: label || `Wallet ${trackedWallets.length + 1}`,
+            addedAt: Date.now()
+        });
+
+        localStorage.setItem('trackedWallets', JSON.stringify(trackedWallets));
+        document.getElementById('walletAddress').value = '';
+        document.getElementById('walletLabel').value = '';
+
+        renderTrackedWallets();
+        selectWallet(address);
+    }
+
+    // Remove wallet from tracking
+    function removeTrackedWallet(address, e) {
+        e.stopPropagation();
+        trackedWallets = trackedWallets.filter(w => w.address.toLowerCase() !== address.toLowerCase());
+        localStorage.setItem('trackedWallets', JSON.stringify(trackedWallets));
+
+        if (selectedWallet && selectedWallet.toLowerCase() === address.toLowerCase()) {
+            selectedWallet = null;
+            document.getElementById('tradesTitle').textContent = 'Recent Platform Activity';
+            document.getElementById('tradesWalletInfo').style.display = 'none';
+            document.getElementById('tradesBody').innerHTML = `
+                <div class="empty-trades">
+                    <div class="empty-trades-icon">&#128202;</div>
+                    <p>Select a wallet to view trades</p>
+                </div>
+            `;
+        }
+
+        renderTrackedWallets();
+    }
+
+    // Select wallet to view trades
+    function selectWallet(address) {
+        selectedWallet = address;
+        const wallet = trackedWallets.find(w => w.address.toLowerCase() === address.toLowerCase());
+
+        document.querySelectorAll('.tracked-wallet-item').forEach(el => {
+            el.classList.toggle('active', el.dataset.address.toLowerCase() === address.toLowerCase());
+        });
+
+        document.getElementById('tradesTitle').textContent = wallet ? wallet.label + ' Trades' : 'Wallet Trades';
+        document.getElementById('tradesWalletInfo').style.display = 'flex';
+        document.getElementById('tradesWalletAddress').textContent = shortAddress(address);
+        document.getElementById('tradesWalletAvatar').src = defaultAvatar(address);
+
+        loadTrades();
+    }
+
+    // Render tracked wallets list
+    function renderTrackedWallets() {
+        const container = document.getElementById('trackedWalletsList');
+
+        if (trackedWallets.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                    No wallets tracked yet
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = trackedWallets.map(w => `
+            <div class="tracked-wallet-item ${selectedWallet === w.address ? 'active' : ''}"
+                 data-address="${w.address}"
+                 onclick="selectWallet('${w.address}')">
+                <img src="${defaultAvatar(w.address)}" class="tracked-wallet-avatar" alt="">
+                <div class="tracked-wallet-info">
+                    <div class="tracked-wallet-address">${shortAddress(w.address)}</div>
+                    <div class="tracked-wallet-label">${w.label}</div>
+                </div>
+                <button class="tracked-wallet-remove" onclick="removeTrackedWallet('${w.address}', event)">
+                    &#10005;
+                </button>
+            </div>
+        `).join('');
+    }
+
+    // Load trades for selected wallet
+    async function loadTrades() {
+        const container = document.getElementById('tradesBody');
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+        try {
+            let url = '/api/trades';
+            if (selectedWallet) {
+                url += '?address=' + selectedWallet;
+            }
+
+            const res = await fetch(url);
+            const data = await res.json();
+            const trades = data.trades || [];
+
+            if (trades.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-trades">
+                        <div class="empty-trades-icon">&#128202;</div>
+                        <p>No trades found</p>
+                        <small>${selectedWallet ? 'This wallet has no recent activity' : 'No recent platform activity'}</small>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = trades.map(t => `
+                <div class="trade-row">
+                    <div class="trade-type ${t.side}">${t.side === 'buy' ? '&#128994;' : '&#128308;'} ${t.side.toUpperCase()}</div>
+                    <div class="trade-market">
+                        ${t.market_image ? `<img src="${t.market_image}" class="trade-market-img">` : ''}
+                        <span class="trade-market-name">${t.market_name || 'Unknown Market'}</span>
+                    </div>
+                    <div class="trade-amount">${formatUSD(t.amount)}</div>
+                    <div class="trade-price">${t.price ? (t.price * 100).toFixed(1) + 'c' : '-'}</div>
+                    <div class="trade-time">${t.time_ago || formatTimeAgo(t.timestamp)}</div>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error('Error loading trades:', e);
+            container.innerHTML = `
+                <div class="empty-trades">
+                    <div class="empty-trades-icon">&#9888;</div>
+                    <p>Error loading trades</p>
+                    <small>Please try again later</small>
+                </div>
+            `;
+        }
+    }
+
+    // Load whale stats
+    async function loadWhaleStats() {
+        try {
+            const res = await fetch('/api/whales');
+            const data = await res.json();
+
+            const summary = data.summary || {};
+            const wallets = data.whale_wallets || [];
+
+            // Update stats
+            document.getElementById('statWhaleCount').textContent = summary.whale_count || 0;
+            document.getElementById('statTotalVolume').textContent = formatUSD(summary.total_deposits + summary.total_withdrawals || 0);
+            document.getElementById('statTotalWallets').textContent = wallets.length || 0;
+
+            const netFlow = summary.net_flow || 0;
+            const netFlowEl = document.getElementById('statNetFlow');
+            netFlowEl.textContent = (netFlow >= 0 ? '+' : '') + formatUSD(netFlow);
+            netFlowEl.className = 'stat-value ' + (netFlow >= 0 ? 'text-green' : 'text-red');
+
+            // Update flow indicator
+            const buyers = wallets.filter(w => w.net_direction === 'NET BUYER').length;
+            const sellers = wallets.filter(w => w.net_direction === 'NET SELLER').length;
+            const total = buyers + sellers || 1;
+
+            document.getElementById('buyersCount').textContent = buyers;
+            document.getElementById('sellersCount').textContent = sellers;
+            document.getElementById('buyersBar').style.width = (buyers / total * 100) + '%';
+            document.getElementById('sellersBar').style.width = (sellers / total * 100) + '%';
+
+            // Render top whales
+            renderTopWhales(wallets.slice(0, 5));
+        } catch (e) {
+            console.error('Error loading whale stats:', e);
+        }
+    }
+
+    // Render top whales
+    function renderTopWhales(whales) {
+        const container = document.getElementById('topWhalesList');
+
+        if (whales.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No whales detected</div>';
+            return;
+        }
+
+        container.innerHTML = whales.map((w, i) => `
+            <div class="tracked-wallet-item" onclick="quickTrackWallet('${w.address}')" style="cursor: pointer;">
+                <img src="${defaultAvatar(w.address)}" class="tracked-wallet-avatar" alt="">
+                <div class="tracked-wallet-info">
+                    <div class="tracked-wallet-address">${shortAddress(w.address)}</div>
+                    <div class="tracked-wallet-label">${formatUSD(w.total_volume_usd)} volume</div>
+                </div>
+                <span class="badge badge-whale">#${i + 1}</span>
+            </div>
+        `).join('');
+    }
+
+    // Quick track wallet from top whales list
+    function quickTrackWallet(address) {
+        if (!trackedWallets.find(w => w.address.toLowerCase() === address.toLowerCase())) {
+            trackedWallets.push({
+                address: address,
+                label: `Whale ${trackedWallets.length + 1}`,
+                addedAt: Date.now()
+            });
+            localStorage.setItem('trackedWallets', JSON.stringify(trackedWallets));
+            renderTrackedWallets();
+        }
+        selectWallet(address);
+    }
+
+    // Format time ago
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return '-';
+        const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000);
+        if (seconds < 60) return seconds + 's ago';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+        if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+        return Math.floor(seconds / 86400) + 'd ago';
+    }
+
+    // Check URL params for wallet address
+    const urlParams = new URLSearchParams(window.location.search);
+    const addressParam = urlParams.get('address');
+    if (addressParam && addressParam.startsWith('0x')) {
+        document.getElementById('walletAddress').value = addressParam;
+        addTrackedWallet();
+    }
+
+    // Initialize
+    renderTrackedWallets();
+    loadWhaleStats();
+
+    // Auto-refresh every 2 minutes
+    setInterval(loadWhaleStats, 120000);
+</script>
+{% endblock %}

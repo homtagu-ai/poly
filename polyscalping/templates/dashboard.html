@@ -1,0 +1,690 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - PolyScalping{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+
+    .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius);
+        padding: 20px 24px;
+        text-align: left;
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-change {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .stat-change.text-green {
+        background: rgba(16,185,129,0.15);
+        color: var(--accent-green);
+    }
+
+    .stat-change.text-red {
+        background: rgba(239,68,68,0.15);
+        color: var(--accent-red);
+    }
+
+    .badge-top {
+        background: rgba(16,185,129,0.15);
+        color: var(--accent-green);
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .stat-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 24px;
+    }
+
+    @media (max-width: 1200px) {
+        .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    .market-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+        cursor: pointer;
+        transition: background 0.2s;
+        overflow: hidden;
+    }
+
+    .market-row:hover {
+        background: var(--bg-card-hover);
+    }
+
+    .market-image {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: var(--bg-secondary);
+        flex-shrink: 0;
+    }
+
+    .market-info {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .market-title {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .market-meta {
+        display: flex;
+        gap: 12px;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .market-price {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .market-price-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .market-price-change {
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    .whale-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .whale-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .whale-address {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 13px;
+    }
+
+    .whale-volume {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+
+    .whale-flow {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .quick-tools {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .quick-tool {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius);
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .quick-tool:hover {
+        border-color: var(--accent-blue);
+        transform: translateY(-2px);
+    }
+
+    .quick-tool-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+
+    .quick-tool-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .quick-tool-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .section-action {
+        font-size: 13px;
+        color: var(--accent-blue);
+        text-decoration: none;
+    }
+
+    .section-action:hover {
+        text-decoration: underline;
+    }
+
+    /* =============================================
+       MOBILE — iPhone 12/13/14/Pro (390–430px)
+       ============================================= */
+    @media (max-width: 600px) {
+        /* --- Stats --- */
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .stat-card {
+            padding: 10px;
+        }
+
+        .stat-header {
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-change, .badge-top {
+            font-size: 9px;
+            padding: 1px 5px;
+        }
+
+        .stat-value {
+            font-size: 17px;
+        }
+
+        /* --- Dashboard layout --- */
+        .dashboard-grid {
+            grid-template-columns: 1fr !important;
+            gap: 14px;
+        }
+
+        /* --- Section headers --- */
+        .section-header {
+            padding: 10px 12px;
+        }
+
+        .section-title {
+            font-size: 12px;
+        }
+
+        .section-action {
+            font-size: 11px;
+        }
+
+        /* --- Risky Opportunities / Market rows --- */
+        .market-row {
+            padding: 10px 12px;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        .market-image {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .market-info {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .market-title {
+            font-size: 12px;
+            white-space: normal;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .market-meta {
+            flex-wrap: wrap;
+            gap: 4px;
+            font-size: 10px;
+        }
+
+        .market-meta .badge {
+            padding: 2px 5px;
+            font-size: 9px;
+        }
+
+        .market-price {
+            flex-shrink: 0;
+            text-align: right;
+        }
+
+        .market-price-value {
+            font-size: 13px;
+        }
+
+        .market-price-change {
+            font-size: 10px;
+        }
+
+        /* --- Quick Tools 2×2 --- */
+        .quick-tools {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .quick-tool {
+            padding: 12px 8px;
+        }
+
+        .quick-tool-icon {
+            font-size: 22px;
+            margin-bottom: 6px;
+        }
+
+        .quick-tool-title {
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        .quick-tool-desc {
+            font-size: 10px;
+            line-height: 1.3;
+        }
+
+        /* --- Top Whales --- */
+        .whale-row {
+            padding: 10px 12px;
+            gap: 8px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+        }
+
+        .whale-info {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .whale-address {
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .whale-volume {
+            font-size: 10px;
+        }
+
+        .whale-flow {
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header blur-fade" style="--delay: 0;">
+    <h1 class="page-title">Find Scalping Opportunities on <span class="text-blue">Polymarket</span></h1>
+    <p class="page-subtitle">Real-time detection of arbitrage and scalping opportunities across all Polymarket markets. Maximize your profits with instant alerts and advanced analytics.</p>
+</div>
+
+<!-- Stats Grid - polyscalping.org style -->
+<div class="stats-grid">
+    <div class="stat-card blur-fade" style="--delay: 1;">
+        <div class="stat-header">
+            <span class="stat-label">24H VOLUME</span>
+            <span class="stat-change text-green" id="volChange">+0%</span>
+        </div>
+        <div class="stat-value number-ticker" id="statVolume">$0</div>
+    </div>
+    <div class="stat-card blur-fade" style="--delay: 2;">
+        <div class="stat-header">
+            <span class="stat-label">TOTAL LIQUIDITY</span>
+            <span class="stat-change text-green" id="liqChange">+0%</span>
+        </div>
+        <div class="stat-value number-ticker" id="statLiquidity">$0</div>
+    </div>
+    <div class="stat-card blur-fade" style="--delay: 3;">
+        <div class="stat-header">
+            <span class="stat-label">MARKETS TRACKED</span>
+            <span class="stat-change text-green" id="marketsChange">+0</span>
+        </div>
+        <div class="stat-value number-ticker" id="statMarkets">0</div>
+    </div>
+    <div class="stat-card blur-fade" style="--delay: 4;">
+        <div class="stat-header">
+            <span class="stat-label">BEST LIQUIDITY MARKET</span>
+            <span class="stat-change badge-top">Top</span>
+        </div>
+        <div class="stat-value number-ticker" id="statBestLiq">$0</div>
+    </div>
+</div>
+
+<!-- Dashboard Grid -->
+<div class="dashboard-grid">
+    <!-- Main Content -->
+    <div>
+        <!-- Risky Opportunities -->
+        <div class="card blur-fade" style="--delay: 5; margin-bottom: 24px;">
+            <div class="section-header">
+                <span class="section-title">&#127922; Risky Opportunities</span>
+                <a href="/markets" class="section-action">View All &rarr;</a>
+            </div>
+            <div id="hotMarketsList">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+
+        <!-- Quick Tools -->
+        <div class="quick-tools">
+            <a href="/calculator" class="quick-tool blur-fade" style="--delay: 6;">
+                <div class="quick-tool-icon">&#128178;</div>
+                <div class="quick-tool-title">ROI Calculator</div>
+                <div class="quick-tool-desc">Calculate profit and ROI for trades</div>
+            </a>
+            <a href="/analyzer" class="quick-tool blur-fade" style="--delay: 7;">
+                <div class="quick-tool-icon">&#128202;</div>
+                <div class="quick-tool-title">Event Analyzer</div>
+                <div class="quick-tool-desc">Deep dive with Kelly sizing & EV</div>
+            </a>
+            <a href="/markets?sort_by=volume" class="quick-tool blur-fade" style="--delay: 8;">
+                <div class="quick-tool-icon">&#128200;</div>
+                <div class="quick-tool-title">Volume Leaders</div>
+                <div class="quick-tool-desc">Markets with highest volume</div>
+            </a>
+            <a href="/whales" class="quick-tool blur-fade" style="--delay: 9;">
+                <div class="quick-tool-icon">&#128051;</div>
+                <div class="quick-tool-title">Whale Tracker</div>
+                <div class="quick-tool-desc">Monitor large wallet activity</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+        <!-- Whale Activity -->
+        <div class="card blur-fade" style="--delay: 6;">
+            <div class="section-header">
+                <span class="section-title">&#128051; Top Whales</span>
+                <a href="/whales" class="section-action">View All &rarr;</a>
+            </div>
+            <div id="whalesList">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Number Ticker Animation (MagicUI style)
+    function animateNumber(element, targetValue, duration = 1000, prefix = '', suffix = '') {
+        const startValue = 0;
+        const startTime = performance.now();
+
+        function update(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Easing function (ease-out cubic)
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const currentValue = Math.floor(startValue + (targetValue - startValue) * easeOut);
+
+            if (prefix === '$') {
+                element.textContent = formatLargeUSD(currentValue);
+            } else {
+                element.textContent = prefix + currentValue.toLocaleString() + suffix;
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            }
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    // Format large USD values like polyscalping.org ($189.7M)
+    function formatLargeUSD(n) {
+        if (!n && n !== 0) return '$0';
+        if (n >= 1000000000) return '$' + (n / 1000000000).toFixed(1) + 'B';
+        if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+        if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K';
+        return '$' + n.toFixed(0);
+    }
+
+    // Update change indicator element
+    function updateChangeIndicator(elementId, value, isPercent) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+
+        const sign = value >= 0 ? '+' : '';
+        const suffix = isPercent ? '%' : '';
+        el.textContent = sign + (isPercent ? value.toFixed(0) : value) + suffix;
+
+        // Update color class
+        el.classList.remove('text-green', 'text-red');
+        el.classList.add(value >= 0 ? 'text-green' : 'text-red');
+    }
+
+    async function loadDashboard() {
+        // Load stats
+        try {
+            const statsRes = await fetch('/api/stats');
+            const stats = await statsRes.json();
+
+            // Animate the main numbers (MagicUI number-ticker style)
+            animateNumber(document.getElementById('statVolume'), stats.total_volume_24h || 0, 1500, '$');
+            animateNumber(document.getElementById('statLiquidity'), stats.total_liquidity || 0, 1500, '$');
+            animateNumber(document.getElementById('statMarkets'), stats.total_markets || 0, 1200);
+
+            // Best liquidity market
+            const bestLiq = stats.best_liquidity_market;
+            if (bestLiq) {
+                animateNumber(document.getElementById('statBestLiq'), bestLiq.liquidity || 0, 1500, '$');
+            }
+
+            // Update change indicators
+            const volChange = stats.volume_change_pct || 0;
+            const liqChange = stats.liquidity_change_pct || 0;
+            const marketsChange = stats.markets_change || 0;
+
+            updateChangeIndicator('volChange', volChange, true);
+            updateChangeIndicator('liqChange', liqChange, true);
+            updateChangeIndicator('marketsChange', marketsChange, false);
+
+        } catch (e) {
+            console.error('Error loading stats:', e);
+        }
+
+        // Load hot markets - AGGRESSIVE: Lower min_score to show more opportunities (was 50)
+        try {
+            const marketsRes = await fetch('/api/trending?limit=10&min_score=20');
+            const marketsData = await marketsRes.json();
+            renderHotMarkets(marketsData.markets || []);
+        } catch (e) {
+            console.error('Error loading markets:', e);
+        }
+
+        // Load whales
+        try {
+            const whalesRes = await fetch('/api/whales');
+            const whalesData = await whalesRes.json();
+            renderWhales(whalesData.wallets || []);
+        } catch (e) {
+            console.error('Error loading whales:', e);
+        }
+    }
+
+    function renderHotMarkets(markets) {
+        const container = document.getElementById('hotMarketsList');
+
+        if (markets.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#127922;</div>
+                    <p>No risky opportunities found</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Filter out OBVIOUS markets - we want risky opportunities!
+        const riskyMarkets = markets.filter(m => m.verdict !== 'OBVIOUS');
+
+        container.innerHTML = riskyMarkets.slice(0, 8).map(m => {
+            const changeClass = m.change_24h >= 0 ? 'text-green' : 'text-red';
+            const changeSign = m.change_24h >= 0 ? '+' : '';
+
+            // Show ROI potential prominently
+            const roiText = m.potential_roi ? `${m.potential_roi.toFixed(0)}% ROI` : '';
+
+            return `
+                <div class="market-row" onclick="window.open('https://polymarket.com/event/${m.event_slug}', '_blank')">
+                    ${m.event_image ? `<img src="${m.event_image}" class="market-image" alt="">` : '<div class="market-image"></div>'}
+                    <div class="market-info">
+                        <div class="market-title">${m.question}</div>
+                        <div class="market-meta">
+                            <span class="badge badge-${m.verdict.toLowerCase()}">${m.verdict}</span>
+                            <span class="text-green">${roiText}</span>
+                            <span>Score: ${m.polysnap_score}</span>
+                        </div>
+                    </div>
+                    <div class="market-price">
+                        <div class="market-price-value">${(m.yes_price * 100).toFixed(0)}c</div>
+                        <div class="market-price-change ${changeClass}">${changeSign}${(m.change_24h * 100).toFixed(1)}%</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderWhales(wallets) {
+        const container = document.getElementById('whalesList');
+
+        if (wallets.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#128051;</div>
+                    <p>No whale activity detected</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = wallets.slice(0, 8).map(w => {
+            const flowClass = w.net_flow >= 0 ? 'text-green' : 'text-red';
+            const flowSign = w.net_flow >= 0 ? '+' : '';
+
+            return `
+                <div class="whale-row">
+                    <div class="avatar">
+                        <img src="${w.profile_image || defaultAvatar(w.address)}" alt="">
+                    </div>
+                    <div class="whale-info">
+                        <div class="whale-address">${shortAddress(w.address)}</div>
+                        <div class="whale-volume">Vol: ${formatUSD(w.total_volume)} &bull; ${w.tx_count} txs</div>
+                    </div>
+                    ${w.is_whale ? '<span class="badge badge-whale">WHALE</span>' : ''}
+                    <div class="whale-flow ${flowClass}">${flowSign}${formatUSD(w.net_flow)}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Initialize
+    loadDashboard();
+
+    // Auto-refresh every 60 seconds
+    setInterval(loadDashboard, 60000);
+</script>
+{% endblock %}
