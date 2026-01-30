@@ -246,7 +246,7 @@ def detect_arbitrage(poly_price, true_prob):
 # KELLY CRITERION SIZING
 # ============================================================================
 def kelly_sizing(bankroll, true_prob, poly_price):
-    """Calculate Kelly criterion for both YES and NO sides - AGGRESSIVE VERSION."""
+    """Calculate Kelly criterion for both YES and NO sides - ALWAYS SUGGEST A POSITION."""
     results = {}
     for side in ["YES", "NO"]:
         if side == "YES":
@@ -257,35 +257,88 @@ def kelly_sizing(bankroll, true_prob, poly_price):
             p = 1.0 - true_prob
 
         if price <= 0 or price >= 1 or p <= 0:
-            results[side] = {"kelly_pct": 0, "bet_amount": 0, "ev": 0, "reason": "Invalid"}
+            results[side] = {"kelly_pct": 0, "bet_amount": 0, "ev": 0, "reason": "Invalid",
+                             "position_pct": 0, "confidence": "none"}
             continue
 
         decimal_odds = 1.0 / price
         b = decimal_odds - 1.0
         q = 1.0 - p
         full_kelly = (b * p - q) / b if b > 0 else 0
-        full_kelly = max(0, min(full_kelly, 0.35))  # AGGRESSIVE: Raised cap from 0.25 to 0.35
+        full_kelly = max(0, min(full_kelly, 0.35))
 
-        # AGGRESSIVE: Use 0.75 Kelly instead of 0.5 Kelly (more aggressive sizing)
-        aggressive_kelly = full_kelly * 0.75  # Was 0.5 (half kelly)
-        bet = bankroll * aggressive_kelly
-
-        # AGGRESSIVE: Minimum bet suggestion if EV is positive
+        aggressive_kelly = full_kelly * 0.75
         ev = p * (decimal_odds - 1) - q
-        if ev > 0 and bet < bankroll * 0.02:
-            bet = bankroll * 0.02  # At least 2% of bankroll for +EV bets
-
         roi_if_win = (1.0 / price) - 1.0
+
+        # ============================================================
+        # ALWAYS-ON POSITION SIZING - dynamic % of bankroll
+        # Even when Kelly says 0, we assign a position based on
+        # market characteristics (price, ROI, liquidity potential)
+        # ============================================================
+        edge = abs(poly_price - true_prob)
+
+        if aggressive_kelly > 0.001:
+            # Kelly has a signal — use it
+            position_pct = aggressive_kelly
+            confidence = "high" if aggressive_kelly >= 0.05 else "medium"
+        elif ev > 0:
+            # Positive EV but Kelly rounds to ~0 — small position
+            position_pct = max(0.02, min(ev * 2, 0.10))
+            confidence = "medium"
+        else:
+            # No mathematical edge — use heuristic sizing based on ROI potential
+            # Lower price = higher ROI if correct = more attractive for speculation
+            if price <= 0.10:
+                # Deep longshot: high ROI (900%+), small speculative bet
+                position_pct = 0.03  # 3% of bankroll
+                confidence = "speculative"
+            elif price <= 0.25:
+                # Underdog: good ROI (300%+), moderate spec bet
+                position_pct = 0.04  # 4%
+                confidence = "speculative"
+            elif price <= 0.40:
+                # Slight underdog: decent ROI (150%+)
+                position_pct = 0.05  # 5%
+                confidence = "low"
+            elif price <= 0.60:
+                # Coin flip zone: moderate ROI, standard position
+                position_pct = 0.05  # 5%
+                confidence = "low"
+            elif price <= 0.75:
+                # Favorite: lower ROI but higher win probability
+                position_pct = 0.06  # 6%
+                confidence = "low"
+            else:
+                # Heavy favorite: low ROI (33% or less), bigger position needed
+                position_pct = 0.08  # 8%
+                confidence = "low"
+
+            # Boost position if there's any detectable edge
+            if edge >= 0.03:
+                position_pct = min(position_pct * 1.5, 0.15)
+                confidence = "medium"
+            if edge >= 0.08:
+                position_pct = min(position_pct * 2.0, 0.20)
+                confidence = "high"
+
+        # Apply position sizing to bankroll
+        bet = round(bankroll * position_pct, 2)
+        # Minimum $5 bet, maximum 25% of bankroll
+        bet = max(5.0, min(bet, bankroll * 0.25))
+        position_pct = bet / bankroll if bankroll > 0 else 0
 
         results[side] = {
             "price": round(price, 4),
             "decimal_odds": round(decimal_odds, 2),
             "true_prob": round(p, 4),
             "full_kelly_pct": round(full_kelly * 100, 2),
-            "aggressive_kelly_pct": round(aggressive_kelly * 100, 2),  # Renamed from half_kelly
+            "aggressive_kelly_pct": round(position_pct * 100, 2),
             "bet_amount": round(bet, 2),
             "ev_per_dollar": round(ev, 4),
             "roi_if_win": round(roi_if_win * 100, 2),
+            "position_pct": round(position_pct * 100, 2),
+            "confidence": confidence,
         }
 
     return results
@@ -736,26 +789,37 @@ def generate_claude_report(full_data):
             market_lines.append(f"- {q[:50]}: YES={yp:.1%}, TrueProb={tp:.1%}, Verdict={v}")
         market_summary = "\n".join(market_lines)
 
-        prompt = f"""You are PolySnap Bot, an AGGRESSIVE prediction market analyst focused on HIGH ROI opportunities.
+        # Build strategy summary for the prompt
+        strat = full_data.get("strategy", {})
+        strat_line = ""
+        if strat.get("best_market"):
+            strat_line = f"\nSTRATEGY ENGINE RECOMMENDATION:\n- Best Market: {strat['best_market']}\n- Side: {strat.get('best_side', 'YES')}\n- Position Size: ${strat.get('recommended_position', 0):,.0f} ({strat.get('position_pct', 0):.1f}% of bankroll)\n- Confidence: {strat.get('confidence', 'low')}\n- Potential Profit: ${strat.get('potential_profit', 0):,.0f}\n- Risk/Reward: {strat.get('risk_reward', 0):.1f}x\n"
 
-Generate a concise but ACTIONABLE analysis report for this event. FAVOR taking positions - users want to trade frequently.
+        prompt = f"""You are PolySnap Bot, an AGGRESSIVE prediction market analyst. You ALWAYS recommend a position to enter. NEVER say "PASS" or "wait". Every market has an opportunity.
+
+Generate a concise but ACTIONABLE analysis report for this event.
 
 EVENT: {event_title}
 BUDGET: ${budget:,.0f}
 
 MARKETS:
 {market_summary}
-
+{strat_line}
 WHALE ACTIVITY:
 {json.dumps(full_data.get('whale_tracking', {}).get('summary', {}), indent=2)}
 
 Write a brief report with:
-1. **Executive Summary** - 2-3 sentences. Be BULLISH on opportunities, highlight the upside potential.
-2. **Best Opportunity** - Which market has the highest ROI potential (not just the safest bet!)
-3. **Recommended Action** - Give a SPECIFIC position recommendation. Use aggressive Kelly sizing (75% of full Kelly). Only recommend "PASS" if truly no edge exists.
+1. **Executive Summary** - 2-3 sentences. Be BULLISH. Every event has tradeable angles.
+2. **Best Opportunity** - Which market has the highest ROI potential. Include the specific YES/NO price.
+3. **Recommended Position** - ALWAYS give a SPECIFIC dollar amount and side (BUY YES or BUY NO). Use the strategy engine's position size (${strat.get('recommended_position', 0):,.0f}) as your baseline. Explain WHY this position makes sense. Include the % of bankroll.
 4. **Key Risks** - Top 2 risks, but frame them as manageable.
 
-IMPORTANT: Be aggressive and action-oriented. Users want to trade, not wait for perfect setups. A 50% win rate with 2:1 payoff is a GREAT opportunity. Focus on ROI potential, not probability of winning.
+CRITICAL RULES:
+- NEVER recommend "PASS", "wait", or "no position". ALWAYS recommend entering a trade.
+- ALWAYS include a specific dollar position size and percentage of bankroll.
+- Even in uncertain markets, there's always a side with better risk/reward. Find it.
+- Low-probability outcomes at cheap prices (e.g. 5¢ YES) are GREAT speculative bets with 20x upside.
+- Frame every recommendation with potential ROI upside.
 
 Keep it under 500 words. Be specific with numbers and position sizes."""
 
@@ -872,9 +936,10 @@ def run_full_analysis(job_id, slug, budget):
         # Step 8: Strategy calculations
         _update_job(job_id, {"step": 8, "step_label": PIPELINE_STEPS[7]})
 
-        # Find best opportunity
+        # Find best opportunity - ALWAYS pick a position
         best_market = None
         best_ev = -999
+        best_side = "YES"
         for m in all_analysis:
             for side in ["YES", "NO"]:
                 k = m["kelly"].get(side, {})
@@ -884,11 +949,28 @@ def run_full_analysis(job_id, slug, budget):
                     best_market = m
                     best_side = side
 
+        # If no +EV found, pick the market with highest ROI potential
+        if (best_market is None or best_ev <= 0) and all_analysis:
+            best_roi = -1
+            for m in all_analysis:
+                for side in ["YES", "NO"]:
+                    k = m["kelly"].get(side, {})
+                    roi = k.get("roi_if_win", 0)
+                    bet = k.get("bet_amount", 0)
+                    # Prefer markets with actual ROI and a position
+                    score = roi * 0.7 + (bet > 0) * 30  # Weighted score
+                    if score > best_roi:
+                        best_roi = score
+                        best_market = m
+                        best_side = side
+
         strategy = {
             "best_market": best_market["question"] if best_market else None,
             "best_side": best_side if best_market else None,
             "best_ev": best_ev,
             "recommended_position": 0,
+            "position_pct": 0,
+            "confidence": "none",
             "max_loss": 0,
             "potential_profit": 0,
             "risk_reward": 0,
@@ -896,13 +978,21 @@ def run_full_analysis(job_id, slug, budget):
 
         if best_market:
             k = best_market["kelly"].get(best_side, {})
-            strategy["recommended_position"] = k.get("bet_amount", 0)
-            strategy["max_loss"] = k.get("bet_amount", 0)
+            position = k.get("bet_amount", 0)
+
+            # ALWAYS have a position - fallback to 5% of budget
+            if position <= 0:
+                position = round(budget * 0.05, 2)
+
+            strategy["recommended_position"] = position
+            strategy["position_pct"] = k.get("position_pct", round(position / budget * 100, 2) if budget > 0 else 0)
+            strategy["confidence"] = k.get("confidence", "low")
+            strategy["max_loss"] = position
             price = k.get("price", 0.5)
             if price > 0:
-                strategy["potential_profit"] = strategy["recommended_position"] * ((1 / price) - 1)
+                strategy["potential_profit"] = round(position * ((1 / price) - 1), 2)
                 if strategy["max_loss"] > 0:
-                    strategy["risk_reward"] = strategy["potential_profit"] / strategy["max_loss"]
+                    strategy["risk_reward"] = round(strategy["potential_profit"] / strategy["max_loss"], 2)
 
         # Step 9: AI Report
         _update_job(job_id, {"step": 9, "step_label": PIPELINE_STEPS[8]})

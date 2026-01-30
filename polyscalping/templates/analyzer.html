@@ -725,20 +725,33 @@ function renderFullResults(data) {
     const verdict = (bestMarket.arbitrage || {}).verdict || 'FAIR';
     const roiIfWin = kellyData.roi_if_win || 0;
 
-    // AGGRESSIVE DECISION LOGIC - recommend betting more frequently
-    let rec = 'HOLD', cls = 'neutral', icon = '⏸️', txt = 'Marginal opportunity', sub = 'Consider small position';
-    if (evPct > 0.5 || roiIfWin > 50 || edge > 0.03) {
-        // AGGRESSIVE: Lower threshold for BUY (was evPct > 2 && kellyPct > 1)
+    // ALWAYS-TRADE DECISION LOGIC - always recommend a position
+    const confidence = (kellyData.confidence || strat.confidence || 'low');
+    let rec = 'BUY', cls = '', icon = '🚀', txt = '', sub = '';
+
+    if (confidence === 'high' || evPct > 3 || edge > 0.08) {
+        rec = 'STRONG BUY'; cls = ''; icon = '🔥';
+        txt = 'High-conviction opportunity!';
+        sub = `${kellyPct.toFixed(1)}% of bankroll · ${roiIfWin.toFixed(0)}% ROI potential`;
+    } else if (confidence === 'medium' || evPct > 0.5 || edge > 0.03 || roiIfWin > 100) {
         rec = 'BUY'; cls = ''; icon = '🚀';
-        txt = evPct > 5 ? 'Strong opportunity detected!' : 'Positive edge detected';
-        sub = `${kellyPct.toFixed(1)}% Kelly · ${roiIfWin.toFixed(0)}% ROI potential`;
-    } else if (evPct < -5 && edge < 0.02) {
-        // Only AVOID if clearly negative
-        rec = 'AVOID'; cls = 'negative'; icon = '🚫'; txt = 'Negative expected value'; sub = 'Market appears overpriced';
+        txt = 'Good risk/reward detected';
+        sub = `${kellyPct.toFixed(1)}% of bankroll · ${roiIfWin.toFixed(0)}% ROI potential`;
+    } else if (confidence === 'speculative' || roiIfWin > 300) {
+        rec = 'SPECULATE'; cls = ''; icon = '🎯';
+        txt = 'High-upside speculative play';
+        sub = `${kellyPct.toFixed(1)}% of bankroll · ${roiIfWin.toFixed(0)}% ROI if correct`;
+    } else {
+        rec = 'BUY'; cls = ''; icon = '💰';
+        txt = 'Position recommended';
+        sub = `${kellyPct.toFixed(1)}% of bankroll · ${roiIfWin.toFixed(0)}% ROI potential`;
     }
 
-    const posSize = strat.recommended_position || 0;
-    const risk = strat.max_loss || 0;
+    // Position size - ALWAYS non-zero
+    let posSize = strat.recommended_position || 0;
+    if (posSize <= 0) posSize = Math.round(budget * 0.05); // Fallback: 5% of budget
+    const posPct = strat.position_pct || (posSize / budget * 100);
+    const risk = strat.max_loss || posSize;
     const reward = strat.potential_profit || 0;
     const riskReward = strat.risk_reward || 0;
 
@@ -751,17 +764,18 @@ function renderFullResults(data) {
     document.getElementById('results').innerHTML = `
         <!-- Decision Box -->
         <div class="decision-box ${cls}">
-            <span class="badge ${rec.toLowerCase()}">${rec}</span>
+            <span class="badge ${rec.toLowerCase().replace(' ', '-')}">${rec}</span>
+            <span class="badge" style="background:${confidence === 'high' ? 'var(--accent-green)' : confidence === 'medium' ? 'var(--accent-yellow)' : confidence === 'speculative' ? 'var(--accent-purple)' : 'var(--accent-blue)'};color:#000;margin-left:6px;font-size:0.7rem">${confidence.toUpperCase()} CONFIDENCE</span>
             <div class="decision-title">${icon} ${txt}</div>
             <div class="decision-sub">${sub}</div>
             <div class="action-row">
-                <div class="action-icon ${rec === 'AVOID' ? 'sell' : 'buy'}">${rec === 'AVOID' ? '✋' : '💰'}</div>
+                <div class="action-icon buy">💰</div>
                 <div class="action-text">
-                    <div class="action-main">${rec === 'AVOID' ? 'Do Not Enter' : 'Enter ' + bestSide + ' Position'}</div>
-                    <div class="action-detail">Aggressive Kelly on $${budget.toLocaleString()} bankroll</div>
+                    <div class="action-main">Enter ${bestSide} Position</div>
+                    <div class="action-detail">${posPct.toFixed(1)}% of $${budget.toLocaleString()} bankroll · R:R ${riskReward.toFixed(1)}x</div>
                 </div>
                 <div class="action-amount">
-                    <div class="action-value" style="color:${rec === 'AVOID' ? 'var(--accent-red)' : 'var(--accent-green)'}">$${rec === 'AVOID' ? '0' : posSize.toFixed(0)}</div>
+                    <div class="action-value" style="color:var(--accent-green)">$${posSize.toFixed(0)}</div>
                     <div class="action-label">Position Size</div>
                 </div>
             </div>
