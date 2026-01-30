@@ -765,7 +765,6 @@ function renderFullResults(data) {
         <!-- Decision Box -->
         <div class="decision-box ${cls}">
             <span class="badge ${rec.toLowerCase().replace(' ', '-')}">${rec}</span>
-            <span class="badge" style="background:${confidence === 'high' ? 'var(--accent-green)' : confidence === 'medium' ? 'var(--accent-yellow)' : confidence === 'speculative' ? 'var(--accent-purple)' : 'var(--accent-blue)'};color:#000;margin-left:6px;font-size:0.7rem">${confidence.toUpperCase()} CONFIDENCE</span>
             <div class="decision-title">${icon} ${txt}</div>
             <div class="decision-sub">${sub}</div>
             <div class="action-row">
@@ -795,16 +794,16 @@ function renderFullResults(data) {
         <!-- Metrics -->
         <div class="metrics">
             <div class="metric">
-                <div class="metric-val ${evPct >= 0 ? 'text-green' : 'text-red'}">${evPct >= 0 ? '+' : ''}${evPct.toFixed(1)}%</div>
-                <div class="metric-lbl">Expected Value</div>
+                <div class="metric-val text-green">+${roiIfWin.toFixed(0)}%</div>
+                <div class="metric-lbl">ROI Potential</div>
             </div>
             <div class="metric">
                 <div class="metric-val text-blue">${kellyPct.toFixed(1)}%</div>
-                <div class="metric-lbl">Kelly Fraction</div>
+                <div class="metric-lbl">Position Size</div>
             </div>
             <div class="metric">
-                <div class="metric-val">${(edge * 100).toFixed(1)}%</div>
-                <div class="metric-lbl">Edge</div>
+                <div class="metric-val text-cyan">${((kellyData.price || 0) * 100).toFixed(0)}¢</div>
+                <div class="metric-lbl">Entry Price</div>
             </div>
             <div class="metric">
                 <div class="metric-val text-yellow">${riskReward > 0 ? riskReward.toFixed(1) + 'x' : 'N/A'}</div>
