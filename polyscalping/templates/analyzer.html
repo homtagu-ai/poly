@@ -702,41 +702,39 @@ function renderFullResults(data) {
     const orderbook = data.orderbook_depth || {};
     const report = data.claude_report || '';
 
-    // Find best market
-    let bestMarket = strikes[0] || {};
-    let bestEv = -999;
-    let bestSide = 'YES';
+    // ============================================================
+    // USE BACKEND STRATEGY for all key metrics (not frontend guessing)
+    // The backend has the composite scoring algorithm
+    // ============================================================
+    const bestSide = strat.best_side || 'YES';
+    const bestMarketQuestion = strat.best_market || '';
 
+    // Find the matching strike from backend strategy
+    let bestMarket = strikes[0] || {};
     for (const s of strikes) {
-        for (const side of ['YES', 'NO']) {
-            const k = (s.kelly || {})[side] || {};
-            if ((k.ev_per_dollar || 0) > bestEv) {
-                bestEv = k.ev_per_dollar || 0;
-                bestMarket = s;
-                bestSide = side;
-            }
+        if (s.question === bestMarketQuestion) {
+            bestMarket = s;
+            break;
         }
     }
 
+    // Get kelly data for the strategy's chosen side
     const kellyData = (bestMarket.kelly || {})[bestSide] || {};
-    const kellyPct = kellyData.aggressive_kelly_pct || kellyData.aggressive_kelly_pct || 0;
-    const evPct = (kellyData.ev_per_dollar || 0) * 100;
-    const edge = (bestMarket.arbitrage || {}).edge_absolute || 0;
-    const verdict = (bestMarket.arbitrage || {}).verdict || 'FAIR';
-    const roiIfWin = kellyData.roi_if_win || 0;
 
-    // Position size - ALWAYS non-zero
+    // ALL metrics come from backend strategy or matching kelly data
+    const entryPrice = strat.entry_price || kellyData.price || 0;
+    const roiIfWin = strat.roi_if_win || kellyData.roi_if_win || 0;
     let posSize = strat.recommended_position || 0;
-    if (posSize <= 0) posSize = Math.round(budget * 0.10); // Fallback: 10% of budget
+    if (posSize <= 0) posSize = Math.round(budget * 0.10);
     const posPct = strat.position_pct || (posSize / budget * 100);
-    const risk = strat.max_loss || posSize;
-    const reward = strat.potential_profit || 0;
     const riskReward = strat.risk_reward || 0;
+    const confidence = strat.confidence || kellyData.confidence || 'low';
 
-    // REALISTIC RETURNS DECISION LOGIC
-    const confidence = (kellyData.confidence || strat.confidence || 'low');
-    const winProb = kellyData.price || strat.entry_price || 0.5;  // price ≈ implied probability
+    // Win probability ≈ entry price for the chosen side
+    const winProb = entryPrice || 0.5;
     const expectedProfit = posSize * (roiIfWin / 100) * winProb;
+
+    // Decision logic based on strategy data
     let rec = 'BUY', cls = '', icon = '🚀', txt = '', sub = '';
 
     if (confidence === 'high' && winProb >= 0.65) {
@@ -761,14 +759,12 @@ function renderFullResults(data) {
     const isMultiMarket = strat.is_multi_choice || strikes.length > 1;
     const bestMarketShort = strat.best_market_short || '';
     const bestMarketFull = strat.best_market || bestMarket.question || '';
-    // Build display name: prefer short extracted name, fallback to truncated question
     let targetName = '';
     if (isMultiMarket && bestMarketShort) {
         targetName = bestMarketShort;
     } else if (isMultiMarket && bestMarketFull) {
         targetName = bestMarketFull.length > 50 ? bestMarketFull.substring(0, 47) + '...' : bestMarketFull;
     }
-    const entryPrice = strat.entry_price || kellyData.price || 0;
 
     // Whale summary
     const whaleSummary = whale.summary || {};
@@ -806,18 +802,18 @@ function renderFullResults(data) {
             </div>
         </div>
 
-        <!-- Metrics -->
+        <!-- Metrics — all from backend strategy -->
         <div class="metrics">
             <div class="metric">
                 <div class="metric-val text-green">+${roiIfWin.toFixed(0)}%</div>
-                <div class="metric-lbl">ROI Potential</div>
+                <div class="metric-lbl">ROI if Correct</div>
             </div>
             <div class="metric">
-                <div class="metric-val text-blue">${kellyPct.toFixed(1)}%</div>
+                <div class="metric-val text-blue">${posPct.toFixed(0)}%</div>
                 <div class="metric-lbl">Position Size</div>
             </div>
             <div class="metric">
-                <div class="metric-val text-cyan">${((kellyData.price || 0) * 100).toFixed(0)}¢</div>
+                <div class="metric-val text-cyan">${(entryPrice * 100).toFixed(1)}¢</div>
                 <div class="metric-lbl">Entry Price</div>
             </div>
             <div class="metric">
@@ -851,7 +847,7 @@ function renderFullResults(data) {
                     <div class="chart-wrap"><canvas id="chart-volume"></canvas></div>
                 </div>
                 <div class="chart-card">
-                    <div class="chart-title">📏 Kelly Sizing</div>
+                    <div class="chart-title">📏 Position Sizing (% of Bankroll)</div>
                     <div class="chart-wrap"><canvas id="chart-kelly"></canvas></div>
                 </div>
             </div>
@@ -907,7 +903,7 @@ function renderFullResults(data) {
     setTimeout(() => renderCharts(data), 100);
 
     // Render tables
-    renderStrikeTable(strikes);
+    renderStrikeTable(strikes, strat.best_market || '', strat.best_side || 'YES');
     renderWhaleTable(whale.whale_wallets || []);
     renderOrderbookTable(orderbook);
 
@@ -1053,12 +1049,12 @@ function renderCharts(data) {
                 labels,
                 datasets: [
                     {
-                        label: 'Kelly YES',
+                        label: 'YES Position %',
                         data: strikes.map(s => ((s.kelly || {}).YES || {}).aggressive_kelly_pct || 0),
                         backgroundColor: 'rgba(16,185,129,0.6)',
                     },
                     {
-                        label: 'Kelly NO',
+                        label: 'NO Position %',
                         data: strikes.map(s => ((s.kelly || {}).NO || {}).aggressive_kelly_pct || 0),
                         backgroundColor: 'rgba(239,68,68,0.6)',
                     }
@@ -1076,40 +1072,43 @@ function renderCharts(data) {
     }
 }
 
-function renderStrikeTable(strikes) {
+function renderStrikeTable(strikes, strategyMarket, strategySide) {
     if (!strikes.length) {
-        document.getElementById('strike-table').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No markets</td></tr>';
+        document.getElementById('strike-table').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No markets</td></tr>';
         return;
     }
 
     let html = `<thead><tr>
-        <th>Market</th><th>YES Price</th><th>True Prob</th><th>Edge</th><th>Verdict</th><th>Best Bet</th><th>ROI if Win</th><th>Kelly</th>
+        <th>Market</th><th>YES Price</th><th>Best Side</th><th>Position</th><th>ROI if Win</th><th>Win Prob</th><th>Expected $</th>
     </tr></thead><tbody>`;
 
     for (const s of strikes) {
-        const arb = s.arbitrage || {};
         const kelly = s.kelly || {};
-        const rec = arb.recommendation || 'PASS';
-        const kellyData = kelly[rec.includes('YES') ? 'YES' : 'NO'] || {};
-        const roiData = rec.includes('YES') ? s.roi_yes_wins : s.roi_no_wins;
-        const label = s.strike > 0 ? '$' + s.strike : (s.question || '').substring(0, 30);
+        const label = s.strike > 0 ? '$' + s.strike : (s.question || '').substring(0, 35);
+        const yesPrice = (s.polymarket || {}).yes_price || 0;
 
-        const verdictClass = {
-            'ARBITRAGE': 'badge-purple',
-            'CHEAP': 'badge-green',
-            'EXPENSIVE': 'badge-red',
-            'FAIR': 'badge-yellow'
-        }[arb.verdict] || 'badge-blue';
+        // Pick the better side for this market (higher position)
+        const kYes = kelly.YES || {};
+        const kNo = kelly.NO || {};
+        const bestSideK = kYes.bet_amount >= kNo.bet_amount ? kYes : kNo;
+        const bestSideName = kYes.bet_amount >= kNo.bet_amount ? 'YES' : 'NO';
+        const winP = bestSideK.price || 0.5;
+        const roi = bestSideK.roi_if_win || 0;
+        const bet = bestSideK.bet_amount || 0;
+        const expectedDollar = bet * (roi / 100) * winP;
 
-        html += `<tr>
-            <td><strong>${label}</strong></td>
-            <td>${((s.polymarket || {}).yes_price * 100 || 0).toFixed(1)}%</td>
-            <td>${((s.black_scholes || {}).true_probability * 100 || 0).toFixed(1)}%</td>
-            <td>${((arb.edge_absolute || 0) * 100).toFixed(1)}%</td>
-            <td><span class="badge-inline ${verdictClass}">${arb.verdict || 'FAIR'}</span></td>
-            <td><strong>${rec}</strong></td>
-            <td style="color:var(--accent-green)">${(roiData || {}).roi_percent || 0}%</td>
-            <td>$${(kellyData.bet_amount || 0).toFixed(0)}</td>
+        // Highlight the strategy's recommended market
+        const isStratPick = s.question === strategyMarket;
+        const rowStyle = isStratPick ? 'background:rgba(16,185,129,0.1);border-left:3px solid var(--accent-green)' : '';
+
+        html += `<tr style="${rowStyle}">
+            <td><strong>${isStratPick ? '⭐ ' : ''}${label}</strong></td>
+            <td>${(yesPrice * 100).toFixed(1)}¢</td>
+            <td><span class="badge-inline ${bestSideName === 'YES' ? 'badge-green' : 'badge-red'}">${bestSideName}</span></td>
+            <td><strong>$${bet.toFixed(0)}</strong> <span style="color:var(--text-muted);font-size:0.8em">(${(bestSideK.position_pct || 0).toFixed(0)}%)</span></td>
+            <td style="color:var(--accent-green)">${roi.toFixed(0)}%</td>
+            <td>${(winP * 100).toFixed(0)}%</td>
+            <td style="color:var(--accent-yellow)">~$${expectedDollar.toFixed(0)}</td>
         </tr>`;
     }
 
