@@ -781,12 +781,19 @@ def generate_claude_report(full_data):
         budget = full_data.get("budget", 1000)
 
         market_lines = []
-        for m in markets_data[:5]:  # Limit to top 5 for prompt size
+        num_markets = len(markets_data)
+        is_multi_choice = num_markets > 1
+        for m in markets_data[:8]:  # Show top 8 for multi-choice context
             q = m.get("question", "")
             yp = m.get("polymarket", {}).get("yes_price", 0)
-            tp = m.get("black_scholes", {}).get("true_probability", 0)
-            v = m.get("arbitrage", {}).get("verdict", "")
-            market_lines.append(f"- {q[:50]}: YES={yp:.1%}, TrueProb={tp:.1%}, Verdict={v}")
+            vol = m.get("polymarket", {}).get("volume", 0)
+            kelly_yes = m.get("kelly", {}).get("YES", {})
+            kelly_no = m.get("kelly", {}).get("NO", {})
+            best_k = kelly_yes if kelly_yes.get("bet_amount", 0) >= kelly_no.get("bet_amount", 0) else kelly_no
+            best_side_k = "YES" if best_k == kelly_yes else "NO"
+            roi = best_k.get("roi_if_win", 0)
+            pos = best_k.get("bet_amount", 0)
+            market_lines.append(f"- {q}: YES={yp:.1%}, Vol=${vol:,.0f}, Best={best_side_k} ${pos:.0f} ({roi:.0f}% ROI)")
         market_summary = "\n".join(market_lines)
 
         # Build strategy summary for the prompt
@@ -795,12 +802,22 @@ def generate_claude_report(full_data):
         if strat.get("best_market"):
             strat_line = f"\nSTRATEGY ENGINE RECOMMENDATION:\n- Best Market: {strat['best_market']}\n- Side: {strat.get('best_side', 'YES')}\n- Position Size: ${strat.get('recommended_position', 0):,.0f} ({strat.get('position_pct', 0):.1f}% of bankroll)\n- Confidence: {strat.get('confidence', 'low')}\n- Potential Profit: ${strat.get('potential_profit', 0):,.0f}\n- Risk/Reward: {strat.get('risk_reward', 0):.1f}x\n"
 
+        multi_choice_note = ""
+        if is_multi_choice:
+            multi_choice_note = f"""
+NOTE: This is a MULTI-CHOICE event with {num_markets} markets/outcomes.
+You MUST specify the EXACT outcome/company/person to bet on by name.
+Example: "Buy YES on Alphabet at 83¢" NOT just "Buy YES".
+Each market is a separate bet — be specific about WHICH one."""
+
         prompt = f"""You are PolySnap Bot, an AGGRESSIVE prediction market analyst. You ALWAYS recommend a position to enter. NEVER say "PASS" or "wait". Every market has an opportunity.
 
 Generate a concise but ACTIONABLE analysis report for this event.
 
 EVENT: {event_title}
 BUDGET: ${budget:,.0f}
+NUMBER OF MARKETS: {num_markets}
+{multi_choice_note}
 
 MARKETS:
 {market_summary}
@@ -810,14 +827,15 @@ WHALE ACTIVITY:
 
 Write a brief report with:
 1. **Executive Summary** - 2-3 sentences. Be BULLISH. Every event has tradeable angles.
-2. **Best Opportunity** - Which market has the highest ROI potential. Include the specific YES/NO price.
-3. **Recommended Position** - ALWAYS give a SPECIFIC dollar amount and side (BUY YES or BUY NO). Use the strategy engine's position size (${strat.get('recommended_position', 0):,.0f}) as your baseline. Explain WHY this position makes sense. Include the % of bankroll.
+2. **Best Opportunity** - Name the SPECIFIC market/outcome (e.g. "Alphabet YES at 83¢", not just "YES"). Include the exact price and ROI potential.
+3. **Recommended Position** - ALWAYS give a SPECIFIC dollar amount, side, AND the exact market name. Use the strategy engine's position size (${strat.get('recommended_position', 0):,.0f}) as your baseline. Format: "Buy [YES/NO] on [SPECIFIC MARKET NAME] — ${strat.get('recommended_position', 0):,.0f} ({strat.get('position_pct', 0):.1f}% of bankroll)".
 4. **Key Risks** - Top 2 risks, but frame them as manageable.
 
 CRITICAL RULES:
 - NEVER recommend "PASS", "wait", or "no position". ALWAYS recommend entering a trade.
+- ALWAYS name the SPECIFIC market/outcome — never just say "YES" or "NO" generically.
 - ALWAYS include a specific dollar position size and percentage of bankroll.
-- Even in uncertain markets, there's always a side with better risk/reward. Find it.
+- For multi-choice events: you may recommend positions on 2-3 different outcomes if they have good risk/reward.
 - Low-probability outcomes at cheap prices (e.g. 5¢ YES) are GREAT speculative bets with 20x upside.
 - Frame every recommendation with potential ROI upside.
 

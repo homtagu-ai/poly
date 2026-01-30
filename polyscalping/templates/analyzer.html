@@ -755,6 +755,13 @@ function renderFullResults(data) {
     const reward = strat.potential_profit || 0;
     const riskReward = strat.risk_reward || 0;
 
+    // Specific market name for multi-choice events
+    const bestMarketName = strat.best_market || bestMarket.question || '';
+    // Shorten long names: extract the key answer (e.g. "Will Trump nominate Kevin Warsh..." → "Kevin Warsh")
+    let shortMarketName = bestMarketName;
+    if (shortMarketName.length > 60) shortMarketName = shortMarketName.substring(0, 57) + '...';
+    const isMultiMarket = strikes.length > 1;
+
     // Whale summary
     const whaleSummary = whale.summary || {};
     const netFlow = whaleSummary.net_flow || 0;
@@ -770,8 +777,8 @@ function renderFullResults(data) {
             <div class="action-row">
                 <div class="action-icon buy">💰</div>
                 <div class="action-text">
-                    <div class="action-main">Enter ${bestSide} Position</div>
-                    <div class="action-detail">${posPct.toFixed(1)}% of $${budget.toLocaleString()} bankroll · R:R ${riskReward.toFixed(1)}x</div>
+                    <div class="action-main">Buy ${bestSide} — ${isMultiMarket ? shortMarketName : (ev.event_title || 'This Market')}</div>
+                    <div class="action-detail">${posPct.toFixed(1)}% of $${budget.toLocaleString()} bankroll · R:R ${riskReward.toFixed(1)}x · Entry ${((kellyData.price || 0) * 100).toFixed(1)}¢</div>
                 </div>
                 <div class="action-amount">
                     <div class="action-value" style="color:var(--accent-green)">$${posSize.toFixed(0)}</div>
