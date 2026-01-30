@@ -246,7 +246,14 @@ def detect_arbitrage(poly_price, true_prob):
 # KELLY CRITERION SIZING
 # ============================================================================
 def kelly_sizing(bankroll, true_prob, poly_price):
-    """Calculate Kelly criterion for both YES and NO sides - ALWAYS SUGGEST A POSITION."""
+    """Calculate position sizing — REALISTIC RETURNS philosophy.
+
+    Core principle: Bet BIG on high-probability outcomes for achievable ROI (5-30%),
+    not small bets on longshots hoping for 1000%+ returns.
+
+    The higher the win probability, the bigger the position (because you're more
+    likely to actually collect). Lower probability = smaller position (speculative).
+    """
     results = {}
     for side in ["YES", "NO"]:
         if side == "YES":
@@ -266,66 +273,61 @@ def kelly_sizing(bankroll, true_prob, poly_price):
         q = 1.0 - p
         full_kelly = (b * p - q) / b if b > 0 else 0
         full_kelly = max(0, min(full_kelly, 0.35))
-
-        aggressive_kelly = full_kelly * 0.75
         ev = p * (decimal_odds - 1) - q
         roi_if_win = (1.0 / price) - 1.0
-
-        # ============================================================
-        # ALWAYS-ON POSITION SIZING - dynamic % of bankroll
-        # Even when Kelly says 0, we assign a position based on
-        # market characteristics (price, ROI, liquidity potential)
-        # ============================================================
         edge = abs(poly_price - true_prob)
 
-        if aggressive_kelly > 0.001:
-            # Kelly has a signal — use it
-            position_pct = aggressive_kelly
-            confidence = "high" if aggressive_kelly >= 0.05 else "medium"
-        elif ev > 0:
-            # Positive EV but Kelly rounds to ~0 — small position
-            position_pct = max(0.02, min(ev * 2, 0.10))
-            confidence = "medium"
+        # ============================================================
+        # REALISTIC POSITION SIZING
+        # Philosophy: bet BIG on likely outcomes, small on longshots
+        # Win probability drives position size — you want to COLLECT
+        # ============================================================
+
+        if full_kelly > 0.001:
+            # Kelly has a real signal — use it (aggressive 75%)
+            position_pct = full_kelly * 0.75
+            confidence = "high" if position_pct >= 0.10 else "medium"
         else:
-            # No mathematical edge — use heuristic sizing based on ROI potential
-            # Lower price = higher ROI if correct = more attractive for speculation
-            if price <= 0.10:
-                # Deep longshot: high ROI (900%+), small speculative bet
-                position_pct = 0.03  # 3% of bankroll
-                confidence = "speculative"
-            elif price <= 0.25:
-                # Underdog: good ROI (300%+), moderate spec bet
-                position_pct = 0.04  # 4%
-                confidence = "speculative"
-            elif price <= 0.40:
-                # Slight underdog: decent ROI (150%+)
+            # No Kelly edge — size by win probability
+            # Higher probability = bigger position = more realistic bet
+            if price >= 0.80:
+                # Strong favorite (80%+): BIG position, small but reliable ROI (5-25%)
+                position_pct = 0.20  # 20% of bankroll
+                confidence = "high"
+            elif price >= 0.65:
+                # Solid favorite (65-80%): large position, moderate ROI (25-54%)
+                position_pct = 0.15  # 15%
+                confidence = "high"
+            elif price >= 0.50:
+                # Slight favorite (50-65%): good position, decent ROI (54-100%)
+                position_pct = 0.12  # 12%
+                confidence = "medium"
+            elif price >= 0.30:
+                # Competitive underdog (30-50%): moderate position
+                position_pct = 0.08  # 8%
+                confidence = "medium"
+            elif price >= 0.10:
+                # Underdog (10-30%): smaller position, speculative
                 position_pct = 0.05  # 5%
-                confidence = "low"
-            elif price <= 0.60:
-                # Coin flip zone: moderate ROI, standard position
-                position_pct = 0.05  # 5%
-                confidence = "low"
-            elif price <= 0.75:
-                # Favorite: lower ROI but higher win probability
-                position_pct = 0.06  # 6%
                 confidence = "low"
             else:
-                # Heavy favorite: low ROI (33% or less), bigger position needed
-                position_pct = 0.08  # 8%
+                # Longshot (<10%): tiny position, lottery ticket
+                position_pct = 0.02  # 2%
                 confidence = "low"
 
-            # Boost position if there's any detectable edge
-            if edge >= 0.03:
-                position_pct = min(position_pct * 1.5, 0.15)
-                confidence = "medium"
-            if edge >= 0.08:
-                position_pct = min(position_pct * 2.0, 0.20)
+            # Edge boosts (if model detects mispricing)
+            if edge >= 0.05:
+                position_pct = min(position_pct * 1.3, 0.30)
+                if confidence == "low":
+                    confidence = "medium"
+            if edge >= 0.10:
+                position_pct = min(position_pct * 1.5, 0.35)
                 confidence = "high"
 
-        # Apply position sizing to bankroll
+        # Apply to bankroll
         bet = round(bankroll * position_pct, 2)
-        # Minimum $5 bet, maximum 25% of bankroll
-        bet = max(5.0, min(bet, bankroll * 0.25))
+        # Minimum $5, maximum 35% of bankroll
+        bet = max(5.0, min(bet, bankroll * 0.35))
         position_pct = bet / bankroll if bankroll > 0 else 0
 
         results[side] = {
@@ -826,18 +828,19 @@ WHALE ACTIVITY:
 {json.dumps(full_data.get('whale_tracking', {}).get('summary', {}), indent=2)}
 
 Write a brief report with:
-1. **Executive Summary** - 2-3 sentences. Be BULLISH. Every event has tradeable angles.
-2. **Best Opportunity** - Name the SPECIFIC market/outcome (e.g. "Alphabet YES at 83¢", not just "YES"). Include the exact price and ROI potential.
-3. **Recommended Position** - ALWAYS give a SPECIFIC dollar amount, side, AND the exact market name. Use the strategy engine's position size (${strat.get('recommended_position', 0):,.0f}) as your baseline. Format: "Buy [YES/NO] on [SPECIFIC MARKET NAME] — ${strat.get('recommended_position', 0):,.0f} ({strat.get('position_pct', 0):.1f}% of bankroll)".
+1. **Executive Summary** - 2-3 sentences on the event and the best realistic trade.
+2. **Primary Trade** - The MAIN recommendation. Focus on the MOST LIKELY outcome. Name the SPECIFIC market (e.g. "Alphabet YES at 84¢"). Calculate the realistic ROI. Recommend a large position size (15-25% of bankroll for high-probability bets).
+3. **Position Details** - SPECIFIC dollar amount, side, and market name. Format: "Buy [YES/NO] on [SPECIFIC MARKET NAME] — $X (Y% of bankroll) → Z% ROI if correct". Use the strategy engine's position (${strat.get('recommended_position', 0):,.0f} at {strat.get('position_pct', 0):.1f}%) as baseline.
 4. **Key Risks** - Top 2 risks, but frame them as manageable.
 
 CRITICAL RULES:
-- NEVER recommend "PASS", "wait", or "no position". ALWAYS recommend entering a trade.
+- ALWAYS recommend entering a trade. NEVER say "PASS" or "wait".
 - ALWAYS name the SPECIFIC market/outcome — never just say "YES" or "NO" generically.
-- ALWAYS include a specific dollar position size and percentage of bankroll.
-- For multi-choice events: you may recommend positions on 2-3 different outcomes if they have good risk/reward.
-- Low-probability outcomes at cheap prices (e.g. 5¢ YES) are GREAT speculative bets with 20x upside.
-- Frame every recommendation with potential ROI upside.
+- PRIORITIZE high-probability outcomes with REALISTIC ROI (5-30% returns on big positions).
+  Example: "Buy Alphabet YES at 84¢ → 19% ROI, $500 position" is BETTER than "Buy Tesla YES at 0.4¢ → 28000% ROI, $30 position".
+- The user wants to ACTUALLY COLLECT profits, not gamble on longshots.
+- Bet SIZE matters — a $500 bet with 19% ROI ($95 profit) beats a $30 bet with 300% ROI ($90 profit) because it's far more likely to pay out.
+- For multi-choice events: lead with the favorite/most-likely outcome, then optionally mention a smaller speculative side bet.
 
 Keep it under 500 words. Be specific with numbers and position sizes."""
 
@@ -954,12 +957,9 @@ def run_full_analysis(job_id, slug, budget):
         # Step 8: Strategy calculations
         _update_job(job_id, {"step": 8, "step_label": PIPELINE_STEPS[7]})
 
-        # Find best opportunity - ALWAYS pick a position
-        # Score each market+side by a composite metric that balances:
-        # - Expected value (edge)
-        # - ROI potential (higher for cheap prices)
-        # - Volume/liquidity (more tradeable markets)
-        # - Reasonable probability (not just pure longshots)
+        # Find best opportunity - REALISTIC RETURNS philosophy
+        # Prioritize: high win probability × decent ROI × big position × volume
+        # Goal: "Bet $500 on Alphabet YES at 84¢ for 19% ROI" not "$30 on Tesla for 28000% ROI"
         best_market = None
         best_score = -999
         best_ev = 0
@@ -975,32 +975,39 @@ def run_full_analysis(job_id, slug, budget):
                 price = k.get("price", 0.5)
                 bet = k.get("bet_amount", 0)
 
-                # Composite scoring:
-                # 1. EV bonus (strongest signal when available)
-                ev_score = ev * 100  # e.g. 0.05 EV → 5 points
+                # ============================================================
+                # REALISTIC SCORING - favors achievable, high-confidence bets
+                # ============================================================
 
-                # 2. ROI score (capped — don't let 50000% ROI longshots dominate)
-                roi_score = min(roi, 500) * 0.02  # Cap at 500%, worth up to 10 points
+                # 1. Win probability score (DOMINANT factor — we want to COLLECT)
+                #    Higher probability = much higher score
+                prob_score = price * 40  # 83% → 33 pts, 13% → 5 pts, 1% → 0.4 pts
 
-                # 3. Probability sweet spot: favor 5-50% range (high ROI but not impossibly unlikely)
-                if 0.05 <= price <= 0.50:
-                    prob_score = 15  # Sweet spot — underdog with real chance
-                elif 0.50 < price <= 0.80:
-                    prob_score = 10  # Moderate favorite
-                elif price > 0.80:
-                    prob_score = 5   # Heavy favorite — low ROI
-                elif 0.01 <= price < 0.05:
-                    prob_score = 3   # Extreme longshot
+                # 2. Expected dollar return (position × ROI × probability)
+                #    This captures "how much money do I realistically expect to make?"
+                expected_return = bet * (roi / 100) * price if roi > 0 else 0
+                return_score = min(expected_return / 10, 20)  # Up to 20 pts
+
+                # 3. EV bonus (strongest signal when model detects edge)
+                ev_score = max(ev * 50, 0)  # Only positive EV counts
+
+                # 4. Volume/liquidity (can I actually execute this trade?)
+                vol_score = min(vol / 3000, 8) if vol else 0  # Up to 8 pts for $24k+ vol
+
+                # 5. Position size score — bigger positions = more commitment from our model
+                pos_score = min(bet / (budget * 0.05), 5) if budget > 0 else 0  # Up to 5 pts
+
+                # 6. ROI sanity — prefer 5-100% ROI (achievable), penalize extreme ROI
+                if 5 <= roi <= 100:
+                    roi_score = 10  # Sweet spot: achievable and worthwhile
+                elif 100 < roi <= 300:
+                    roi_score = 5   # Good but less certain
+                elif roi > 300:
+                    roi_score = 1   # Longshot territory
                 else:
-                    prob_score = 0
+                    roi_score = 3   # Very low ROI (<5%)
 
-                # 4. Volume/liquidity bonus (tradeable markets)
-                vol_score = min(vol / 5000, 5) if vol else 0  # Up to 5 points for $25k+ volume
-
-                # 5. Has position (Kelly assigned a bet)
-                pos_score = 5 if bet > 0 else 0
-
-                total_score = ev_score + roi_score + prob_score + vol_score + pos_score
+                total_score = prob_score + return_score + ev_score + vol_score + pos_score + roi_score
 
                 if total_score > best_score:
                     best_score = total_score

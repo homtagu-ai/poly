@@ -725,35 +725,37 @@ function renderFullResults(data) {
     const verdict = (bestMarket.arbitrage || {}).verdict || 'FAIR';
     const roiIfWin = kellyData.roi_if_win || 0;
 
-    // ALWAYS-TRADE DECISION LOGIC - always recommend a position
-    const confidence = (kellyData.confidence || strat.confidence || 'low');
-    let rec = 'BUY', cls = '', icon = '🚀', txt = '', sub = '';
-
-    if (confidence === 'high' || evPct > 3 || edge > 0.08) {
-        rec = 'STRONG BUY'; cls = ''; icon = '🔥';
-        txt = 'High-conviction opportunity!';
-        sub = `${kellyPct.toFixed(1)}% of bankroll · ${roiIfWin.toFixed(0)}% ROI potential`;
-    } else if (confidence === 'medium' || evPct > 0.5 || edge > 0.03 || roiIfWin > 100) {
-        rec = 'BUY'; cls = ''; icon = '🚀';
-        txt = 'Good risk/reward detected';
-        sub = `${kellyPct.toFixed(1)}% of bankroll · ${roiIfWin.toFixed(0)}% ROI potential`;
-    } else if (confidence === 'speculative' || roiIfWin > 300) {
-        rec = 'SPECULATE'; cls = ''; icon = '🎯';
-        txt = 'High-upside speculative play';
-        sub = `${kellyPct.toFixed(1)}% of bankroll · ${roiIfWin.toFixed(0)}% ROI if correct`;
-    } else {
-        rec = 'BUY'; cls = ''; icon = '💰';
-        txt = 'Position recommended';
-        sub = `${kellyPct.toFixed(1)}% of bankroll · ${roiIfWin.toFixed(0)}% ROI potential`;
-    }
-
     // Position size - ALWAYS non-zero
     let posSize = strat.recommended_position || 0;
-    if (posSize <= 0) posSize = Math.round(budget * 0.05); // Fallback: 5% of budget
+    if (posSize <= 0) posSize = Math.round(budget * 0.10); // Fallback: 10% of budget
     const posPct = strat.position_pct || (posSize / budget * 100);
     const risk = strat.max_loss || posSize;
     const reward = strat.potential_profit || 0;
     const riskReward = strat.risk_reward || 0;
+
+    // REALISTIC RETURNS DECISION LOGIC
+    const confidence = (kellyData.confidence || strat.confidence || 'low');
+    const winProb = kellyData.price || strat.entry_price || 0.5;  // price ≈ implied probability
+    const expectedProfit = posSize * (roiIfWin / 100) * winProb;
+    let rec = 'BUY', cls = '', icon = '🚀', txt = '', sub = '';
+
+    if (confidence === 'high' && winProb >= 0.65) {
+        rec = 'STRONG BUY'; cls = ''; icon = '🔥';
+        txt = `High-conviction · ${(winProb * 100).toFixed(0)}% win probability`;
+        sub = `$${posSize.toFixed(0)} position · ${roiIfWin.toFixed(0)}% ROI · ~$${expectedProfit.toFixed(0)} expected profit`;
+    } else if ((confidence === 'medium' || confidence === 'high') && winProb >= 0.40) {
+        rec = 'BUY'; cls = ''; icon = '🚀';
+        txt = `Good opportunity · ${(winProb * 100).toFixed(0)}% win probability`;
+        sub = `$${posSize.toFixed(0)} position · ${roiIfWin.toFixed(0)}% ROI · ~$${expectedProfit.toFixed(0)} expected profit`;
+    } else if (winProb >= 0.10) {
+        rec = 'BUY'; cls = ''; icon = '💰';
+        txt = `Moderate play · ${(winProb * 100).toFixed(0)}% win probability`;
+        sub = `$${posSize.toFixed(0)} position · ${roiIfWin.toFixed(0)}% ROI if correct`;
+    } else {
+        rec = 'SPECULATE'; cls = ''; icon = '🎯';
+        txt = `Longshot · ${(winProb * 100).toFixed(1)}% chance`;
+        sub = `$${posSize.toFixed(0)} position · ${roiIfWin.toFixed(0)}% ROI if correct`;
+    }
 
     // Specific market name for multi-choice events
     const isMultiMarket = strat.is_multi_choice || strikes.length > 1;
