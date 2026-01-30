@@ -68,8 +68,40 @@ ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 ODDS_API_KEY = os.getenv("THE_ODDS_API_KEY", "")
 OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
-# Job storage for async analysis
-analysis_jobs = {}
+# Job storage for async analysis - FILE-BASED for multi-worker compatibility
+import tempfile
+JOBS_DIR = os.path.join(tempfile.gettempdir(), "polysnap_jobs")
+os.makedirs(JOBS_DIR, exist_ok=True)
+
+def _job_path(job_id):
+    """Get file path for a job."""
+    return os.path.join(JOBS_DIR, f"{job_id}.json")
+
+def _save_job(job_id, job_data):
+    """Save job data to file (works across multiple workers/processes)."""
+    path = _job_path(job_id)
+    # Write to temp file then rename for atomicity
+    tmp_path = path + ".tmp"
+    with open(tmp_path, "w") as f:
+        json.dump(job_data, f, default=str)
+    os.replace(tmp_path, path)
+
+def _load_job(job_id):
+    """Load job data from file. Returns None if not found."""
+    path = _job_path(job_id)
+    try:
+        with open(path, "r") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+def _update_job(job_id, updates):
+    """Update specific fields in a job."""
+    job = _load_job(job_id)
+    if job:
+        job.update(updates)
+        _save_job(job_id, job)
+    return job
 
 # Cache
 _cache = {}
@@ -741,14 +773,13 @@ Keep it under 500 words. Be specific with numbers and position sizes."""
 # ============================================================================
 def run_full_analysis(job_id, slug, budget):
     """Run the full 10-step analysis pipeline."""
-    job = analysis_jobs[job_id]
 
     try:
         # Step 1: Polymarket event
-        job.update({"step": 1, "step_label": PIPELINE_STEPS[0]})
+        _update_job(job_id, {"step": 1, "step_label": PIPELINE_STEPS[0]})
         event = fetch_polymarket_event(slug)
         if not event:
-            job.update({"status": "error", "error": "Event not found"})
+            _update_job(job_id, {"status": "error", "error": "Event not found"})
             return
 
         markets = event["markets"]
@@ -757,7 +788,7 @@ def run_full_analysis(job_id, slug, budget):
         is_sports = is_sports_event(event["event_title"])
 
         # Step 2: Stock/Asset data
-        job.update({"step": 2, "step_label": PIPELINE_STEPS[1]})
+        _update_job(job_id, {"step": 2, "step_label": PIPELINE_STEPS[1]})
         stock = None
         spot = 0
         iv = 0.30
@@ -775,7 +806,7 @@ def run_full_analysis(job_id, slug, budget):
             days_left = 7  # Default to 7 days
 
         # Step 3: Probability models
-        job.update({"step": 3, "step_label": PIPELINE_STEPS[2]})
+        _update_job(job_id, {"step": 3, "step_label": PIPELINE_STEPS[2]})
         all_analysis = []
         for m in markets:
             strike = m["strike"]
@@ -816,13 +847,13 @@ def run_full_analysis(job_id, slug, budget):
             })
 
         # Step 4: Sports odds
-        job.update({"step": 4, "step_label": PIPELINE_STEPS[3]})
+        _update_job(job_id, {"step": 4, "step_label": PIPELINE_STEPS[3]})
         sports_odds = {}
         if is_sports:
             sports_odds = fetch_sports_odds(event["event_title"])
 
         # Step 5: Kalshi comparison
-        job.update({"step": 5, "step_label": PIPELINE_STEPS[4]})
+        _update_job(job_id, {"step": 5, "step_label": PIPELINE_STEPS[4]})
         title_words = re.findall(r'[A-Za-z]{3,}', event["event_title"])
         skip_words = {"will", "the", "and", "for", "that", "this", "are", "was", "above", "below", "close"}
         search_kws = [w for w in title_words if w.lower() not in skip_words][:5]
@@ -831,15 +862,15 @@ def run_full_analysis(job_id, slug, budget):
         kalshi_data = fetch_kalshi_markets(search_kws)
 
         # Step 6: Whale tracking
-        job.update({"step": 6, "step_label": PIPELINE_STEPS[5]})
+        _update_job(job_id, {"step": 6, "step_label": PIPELINE_STEPS[5]})
         whale_data = fetch_whale_activity()
 
         # Step 7: Orderbook depth
-        job.update({"step": 7, "step_label": PIPELINE_STEPS[6]})
+        _update_job(job_id, {"step": 7, "step_label": PIPELINE_STEPS[6]})
         orderbook_data = fetch_orderbook_depth(markets)
 
         # Step 8: Strategy calculations
-        job.update({"step": 8, "step_label": PIPELINE_STEPS[7]})
+        _update_job(job_id, {"step": 8, "step_label": PIPELINE_STEPS[7]})
 
         # Find best opportunity
         best_market = None
@@ -874,7 +905,7 @@ def run_full_analysis(job_id, slug, budget):
                     strategy["risk_reward"] = strategy["potential_profit"] / strategy["max_loss"]
 
         # Step 9: AI Report
-        job.update({"step": 9, "step_label": PIPELINE_STEPS[8]})
+        _update_job(job_id, {"step": 9, "step_label": PIPELINE_STEPS[8]})
         full_data = {
             "event": event,
             "stock_data": stock,
@@ -890,7 +921,7 @@ def run_full_analysis(job_id, slug, budget):
         claude_report = generate_claude_report(full_data)
 
         # Step 10: Finalize
-        job.update({"step": 10, "step_label": PIPELINE_STEPS[9]})
+        _update_job(job_id, {"step": 10, "step_label": PIPELINE_STEPS[9]})
 
         result = {
             "generated_at": datetime.now().isoformat(),
@@ -909,11 +940,11 @@ def run_full_analysis(job_id, slug, budget):
             "is_sports": is_sports,
         }
 
-        job.update({"status": "completed", "step": 10, "step_label": "Analysis complete!", "result": result})
+        _update_job(job_id, {"status": "completed", "step": 10, "step_label": "Analysis complete!", "result": result})
 
     except Exception as e:
         import traceback
-        job.update({"status": "error", "error": str(e), "traceback": traceback.format_exc()})
+        _update_job(job_id, {"status": "error", "error": str(e), "traceback": traceback.format_exc()})
 
 # ============================================================================
 # TRENDING MARKETS ENGINE
@@ -1298,14 +1329,14 @@ def api_analyze():
 
     # Create job
     job_id = str(uuid.uuid4())
-    analysis_jobs[job_id] = {
+    _save_job(job_id, {
         "status": "running",
         "step": 0,
         "total_steps": len(PIPELINE_STEPS),
         "step_label": "Starting...",
         "result": None,
         "error": None,
-    }
+    })
 
     # Run in background thread
     thread = threading.Thread(target=run_full_analysis, args=(job_id, slug, budget))
@@ -1316,10 +1347,10 @@ def api_analyze():
 @app.route("/api/analyze/status/<job_id>")
 def api_analyze_status(job_id):
     """Get analysis job status."""
-    if job_id not in analysis_jobs:
+    job = _load_job(job_id)
+    if not job:
         return jsonify({"error": "Job not found"}), 404
 
-    job = analysis_jobs[job_id]
     return jsonify({
         "status": job["status"],
         "step": job["step"],
@@ -1331,10 +1362,10 @@ def api_analyze_status(job_id):
 @app.route("/api/analyze/result/<job_id>")
 def api_analyze_result(job_id):
     """Get analysis job result."""
-    if job_id not in analysis_jobs:
+    job = _load_job(job_id)
+    if not job:
         return jsonify({"error": "Job not found"}), 404
 
-    job = analysis_jobs[job_id]
     if job["status"] != "completed":
         return jsonify({"error": f"Job not ready: {job['status']}", "status": job["status"]}), 400
 

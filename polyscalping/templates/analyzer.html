@@ -536,6 +536,7 @@
 <script>
 let budget = 1000;
 let currentJobId = null;
+let pollRetries = 0;
 let pollInterval = null;
 let chartInstances = {};
 
@@ -658,7 +659,21 @@ async function pollStatus() {
         const res = await fetch('/api/analyze/status/' + currentJobId);
         const st = await res.json();
 
-        updateProgress(st.step, st.total_steps, st.step_label);
+        // Handle job not found (404) or missing status fields
+        if (res.status === 404 || st.error === 'Job not found') {
+            pollRetries = (pollRetries || 0) + 1;
+            if (pollRetries > 5) {
+                document.getElementById('results').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Analysis job lost. Please try again.</p></div>`;
+                document.getElementById('analyzeBtn').disabled = false;
+                document.getElementById('analyzeBtnText').textContent = 'Run Full Analysis';
+                return;
+            }
+            setTimeout(pollStatus, 1500);
+            return;
+        }
+        pollRetries = 0;
+
+        updateProgress(st.step || 0, st.total_steps || 10, st.step_label || 'Processing...');
 
         if (st.status === 'completed') {
             const result = await fetch('/api/analyze/result/' + currentJobId).then(r => r.json());
