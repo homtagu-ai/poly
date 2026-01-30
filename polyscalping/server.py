@@ -955,37 +955,120 @@ def run_full_analysis(job_id, slug, budget):
         _update_job(job_id, {"step": 8, "step_label": PIPELINE_STEPS[7]})
 
         # Find best opportunity - ALWAYS pick a position
+        # Score each market+side by a composite metric that balances:
+        # - Expected value (edge)
+        # - ROI potential (higher for cheap prices)
+        # - Volume/liquidity (more tradeable markets)
+        # - Reasonable probability (not just pure longshots)
         best_market = None
-        best_ev = -999
+        best_score = -999
+        best_ev = 0
         best_side = "YES"
+
         for m in all_analysis:
+            vol = m.get("polymarket", {}).get("volume", 0)
+            liq = m.get("polymarket", {}).get("liquidity", 0)
             for side in ["YES", "NO"]:
                 k = m["kelly"].get(side, {})
                 ev = k.get("ev_per_dollar", 0)
-                if ev > best_ev:
+                roi = k.get("roi_if_win", 0)
+                price = k.get("price", 0.5)
+                bet = k.get("bet_amount", 0)
+
+                # Composite scoring:
+                # 1. EV bonus (strongest signal when available)
+                ev_score = ev * 100  # e.g. 0.05 EV → 5 points
+
+                # 2. ROI score (capped — don't let 50000% ROI longshots dominate)
+                roi_score = min(roi, 500) * 0.02  # Cap at 500%, worth up to 10 points
+
+                # 3. Probability sweet spot: favor 5-50% range (high ROI but not impossibly unlikely)
+                if 0.05 <= price <= 0.50:
+                    prob_score = 15  # Sweet spot — underdog with real chance
+                elif 0.50 < price <= 0.80:
+                    prob_score = 10  # Moderate favorite
+                elif price > 0.80:
+                    prob_score = 5   # Heavy favorite — low ROI
+                elif 0.01 <= price < 0.05:
+                    prob_score = 3   # Extreme longshot
+                else:
+                    prob_score = 0
+
+                # 4. Volume/liquidity bonus (tradeable markets)
+                vol_score = min(vol / 5000, 5) if vol else 0  # Up to 5 points for $25k+ volume
+
+                # 5. Has position (Kelly assigned a bet)
+                pos_score = 5 if bet > 0 else 0
+
+                total_score = ev_score + roi_score + prob_score + vol_score + pos_score
+
+                if total_score > best_score:
+                    best_score = total_score
                     best_ev = ev
                     best_market = m
                     best_side = side
 
-        # If no +EV found, pick the market with highest ROI potential
-        if (best_market is None or best_ev <= 0) and all_analysis:
-            best_roi = -1
-            for m in all_analysis:
-                for side in ["YES", "NO"]:
-                    k = m["kelly"].get(side, {})
-                    roi = k.get("roi_if_win", 0)
-                    bet = k.get("bet_amount", 0)
-                    # Prefer markets with actual ROI and a position
-                    score = roi * 0.7 + (bet > 0) * 30  # Weighted score
-                    if score > best_roi:
-                        best_roi = score
-                        best_market = m
-                        best_side = side
+        # Extract a short answer name from market question for multi-choice events
+        # e.g. "Will Tesla be the second-largest..." → "Tesla"
+        # e.g. "Will Trump nominate Kevin Warsh..." → "Kevin Warsh"
+        def extract_answer_name(question, event_title, all_questions):
+            """Extract the unique differentiating part of a market question vs other questions."""
+            if not question:
+                return ""
+            q = question.strip().rstrip("?")
+
+            # Strategy 1: Find the word(s) that differ between this question and others
+            # Split all questions into word sets to find common words
+            all_words_sets = []
+            for oq in all_questions:
+                all_words_sets.append(set(oq.lower().strip().rstrip("?").split()))
+            # Words that appear in ALL questions (these are the template/common words)
+            if len(all_words_sets) >= 2:
+                common_words = all_words_sets[0]
+                for ws in all_words_sets[1:]:
+                    common_words = common_words & ws
+            else:
+                common_words = set()
+
+            # Also add generic stop words
+            common_words.update({"will", "the", "be", "by", "on", "in", "at", "for", "and", "or", "of",
+                                 "to", "a", "an", "is", "as", "that", "this", "it", "its", "are", "was"})
+
+            # Find unique words (present in this question but not in common set)
+            q_words = q.split()
+            if q_words and q_words[0].lower() == "will":
+                q_words = q_words[1:]
+
+            unique_words = []
+            for w in q_words:
+                if w.lower().rstrip(",.!?") not in common_words:
+                    unique_words.append(w)
+
+            if unique_words:
+                return " ".join(unique_words)
+
+            # Fallback: first capitalized entity after "Will"
+            for w in q_words:
+                clean = re.sub(r'[^a-zA-Z]', '', w)
+                if clean and clean[0].isupper() and clean.lower() not in common_words:
+                    return clean
+
+            return q[:40]
+
+        best_question = best_market["question"] if best_market else None
+        best_answer_name = ""
+        is_multi_choice = len(all_analysis) > 1
+        all_questions = [m["question"] for m in all_analysis]
+        if best_market and is_multi_choice:
+            best_answer_name = extract_answer_name(best_question, event.get("event_title", ""), all_questions)
 
         strategy = {
-            "best_market": best_market["question"] if best_market else None,
+            "best_market": best_question,
+            "best_market_short": best_answer_name,
             "best_side": best_side if best_market else None,
             "best_ev": best_ev,
+            "is_multi_choice": is_multi_choice,
+            "num_markets": len(all_analysis),
             "recommended_position": 0,
             "position_pct": 0,
             "confidence": "none",
@@ -1006,6 +1089,8 @@ def run_full_analysis(job_id, slug, budget):
             strategy["position_pct"] = k.get("position_pct", round(position / budget * 100, 2) if budget > 0 else 0)
             strategy["confidence"] = k.get("confidence", "low")
             strategy["max_loss"] = position
+            strategy["entry_price"] = k.get("price", 0.5)
+            strategy["roi_if_win"] = k.get("roi_if_win", 0)
             price = k.get("price", 0.5)
             if price > 0:
                 strategy["potential_profit"] = round(position * ((1 / price) - 1), 2)

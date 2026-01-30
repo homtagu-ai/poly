@@ -756,11 +756,17 @@ function renderFullResults(data) {
     const riskReward = strat.risk_reward || 0;
 
     // Specific market name for multi-choice events
-    const bestMarketName = strat.best_market || bestMarket.question || '';
-    // Shorten long names: extract the key answer (e.g. "Will Trump nominate Kevin Warsh..." → "Kevin Warsh")
-    let shortMarketName = bestMarketName;
-    if (shortMarketName.length > 60) shortMarketName = shortMarketName.substring(0, 57) + '...';
-    const isMultiMarket = strikes.length > 1;
+    const isMultiMarket = strat.is_multi_choice || strikes.length > 1;
+    const bestMarketShort = strat.best_market_short || '';
+    const bestMarketFull = strat.best_market || bestMarket.question || '';
+    // Build display name: prefer short extracted name, fallback to truncated question
+    let targetName = '';
+    if (isMultiMarket && bestMarketShort) {
+        targetName = bestMarketShort;
+    } else if (isMultiMarket && bestMarketFull) {
+        targetName = bestMarketFull.length > 50 ? bestMarketFull.substring(0, 47) + '...' : bestMarketFull;
+    }
+    const entryPrice = strat.entry_price || kellyData.price || 0;
 
     // Whale summary
     const whaleSummary = whale.summary || {};
@@ -777,8 +783,8 @@ function renderFullResults(data) {
             <div class="action-row">
                 <div class="action-icon buy">💰</div>
                 <div class="action-text">
-                    <div class="action-main">Buy ${bestSide} — ${isMultiMarket ? shortMarketName : (ev.event_title || 'This Market')}</div>
-                    <div class="action-detail">${posPct.toFixed(1)}% of $${budget.toLocaleString()} bankroll · R:R ${riskReward.toFixed(1)}x · Entry ${((kellyData.price || 0) * 100).toFixed(1)}¢</div>
+                    <div class="action-main" style="font-size:1.1rem">Buy ${bestSide}${targetName ? ' on <span style="color:var(--accent-cyan);font-weight:700">' + targetName + '</span>' : ''} at ${(entryPrice * 100).toFixed(1)}¢</div>
+                    <div class="action-detail">${posPct.toFixed(1)}% of $${budget.toLocaleString()} bankroll · R:R ${riskReward.toFixed(1)}x · ${roiIfWin.toFixed(0)}% ROI if correct</div>
                 </div>
                 <div class="action-amount">
                     <div class="action-value" style="color:var(--accent-green)">$${posSize.toFixed(0)}</div>
