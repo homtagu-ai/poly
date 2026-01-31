@@ -185,26 +185,16 @@
             margin-right: 48px;
         }
 
-        .nav-logo {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #3b7cf5, #5b9cff);
-            border-radius: 10px;
+        .nav-brand-link {
             display: flex;
             align-items: center;
-            justify-content: center;
+            text-decoration: none;
         }
 
-        .nav-logo svg {
-            width: 24px;
-            height: 24px;
-            fill: white;
-        }
-
-        .nav-brand-text {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
+        .nav-logo-img {
+            height: 38px;
+            width: auto;
+            object-fit: contain;
         }
 
         .nav-links {
@@ -667,24 +657,13 @@
                 padding: 0 12px;
             }
 
-            .nav-logo {
-                width: 34px;
-                height: 34px;
-                border-radius: 8px;
-            }
-
-            .nav-logo svg {
-                width: 20px;
-                height: 20px;
+            .nav-logo-img {
+                height: 28px;
             }
 
             .nav-brand {
                 gap: 8px;
                 margin-right: 0;
-            }
-
-            .nav-brand-text {
-                font-size: 15px;
             }
 
             .nav-hamburger {
@@ -806,12 +785,9 @@
 
     <nav>
         <div class="nav-brand">
-            <div class="nav-logo">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 13h2v8H3v-8zm4-6h2v14H7V7zm4 3h2v11h-2V10zm4-6h2v17h-2V4zm4 3h2v14h-2V7z"/>
-                </svg>
-            </div>
-            <span class="nav-brand-text">PolyScalping</span>
+            <a href="/" class="nav-brand-link">
+                <img src="{{ url_for('static', filename='images/polyhunter-logo.png') }}" alt="PolyHunter" class="nav-logo-img">
+            </a>
         </div>
 
         <div class="nav-links" id="navLinks">
