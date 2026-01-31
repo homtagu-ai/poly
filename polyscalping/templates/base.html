@@ -9,28 +9,29 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg-primary: #0a0e17;
-            --bg-secondary: #0f1419;
-            --bg-card: #151b23;
-            --bg-card-hover: #1a222d;
-            --bg-input: #1a222d;
-            --border: #252d3a;
-            --border-subtle: #1e2530;
-            --text-primary: #e8ecf4;
-            --text-secondary: #8b95a8;
-            --text-muted: #555f70;
-            --accent-blue: #4f8ff7;
+            --bg-primary: #0b1520;
+            --bg-secondary: #101c28;
+            --bg-card: #142230;
+            --bg-card-hover: #1a2d3d;
+            --bg-input: #1a2d3d;
+            --border: #243848;
+            --border-subtle: #1c3040;
+            --text-primary: #e4eef6;
+            --text-secondary: #8ba8be;
+            --text-muted: #507080;
+            --accent-blue: #3ba5b5;
             --accent-green: #10b981;
             --accent-red: #ef4444;
-            --accent-purple: #8b5cf6;
+            --accent-purple: #3ba5b5;
             --accent-yellow: #f59e0b;
-            --accent-cyan: #06b6d4;
+            --accent-cyan: #0dd3ce;
+            --accent-teal: #3edbd5;
             --radius: 12px;
             --radius-sm: 8px;
             --nav-height: 64px;
         }
 
-        ::selection { background: rgba(79,143,247,0.3); color: #fff; }
+        ::selection { background: rgba(59,165,181,0.3); color: #fff; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-primary); }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -81,9 +82,9 @@
                 from var(--border-angle, 0deg),
                 transparent 0%,
                 transparent 25%,
-                var(--accent-blue) 30%,
-                var(--accent-purple) 50%,
-                var(--accent-cyan) 70%,
+                #3ba5b5 30%,
+                #0dd3ce 50%,
+                #7ee8fa 70%,
                 transparent 75%,
                 transparent 100%
             );
@@ -111,9 +112,9 @@
             border-radius: var(--radius);
             background: linear-gradient(
                 135deg,
-                rgba(79, 143, 247, 0.03) 0%,
+                rgba(59, 165, 181, 0.04) 0%,
                 transparent 50%,
-                rgba(139, 92, 246, 0.03) 100%
+                rgba(13, 211, 206, 0.03) 100%
             );
             pointer-events: none;
             z-index: 0;
@@ -141,19 +142,19 @@
             background: conic-gradient(
                 from var(--border-angle, 0deg),
                 transparent 0%,
-                var(--accent-cyan) 15%,
-                var(--accent-blue) 30%,
-                var(--accent-purple) 50%,
-                var(--accent-blue) 70%,
-                var(--accent-cyan) 85%,
+                #7ee8fa 15%,
+                #3ba5b5 30%,
+                #0dd3ce 50%,
+                #3ba5b5 70%,
+                #7ee8fa 85%,
                 transparent 100%
             );
         }
 
         .animated-border-box:hover {
             box-shadow:
-                0 0 20px rgba(79, 143, 247, 0.1),
-                0 0 40px rgba(139, 92, 246, 0.05);
+                0 0 20px rgba(59, 165, 181, 0.12),
+                0 0 40px rgba(13, 211, 206, 0.06);
         }
 
         /* Navigation — stays visible on scroll (incl. iOS Safari) */
@@ -398,13 +399,13 @@
         }
 
         .btn-primary:hover {
-            background: #3b7cf5;
+            background: #2e8f9e;
         }
 
         /* Animated Gradient Button (MagicUI style) */
         .btn-gradient-animated {
             position: relative;
-            background: linear-gradient(90deg, #2563eb, #7c3aed, #ec4899, #f97316, #eab308, #22c55e, #2563eb);
+            background: linear-gradient(90deg, #3ba5b5, #0dd3ce, #7ee8fa, #3edbd5, #10b981, #3ba5b5);
             background-size: 300% 100%;
             animation: gradientShift 3s ease-in-out infinite;
             border: none;
@@ -417,7 +418,7 @@
 
         .btn-gradient-animated:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 4px 20px rgba(59, 165, 181, 0.4);
         }
 
         @keyframes gradientShift {
@@ -506,13 +507,13 @@
         }
 
         .badge-cool {
-            background: rgba(79,143,247,0.15);
+            background: rgba(59,165,181,0.15);
             color: var(--accent-blue);
         }
 
         .badge-whale {
-            background: rgba(139,92,246,0.15);
-            color: var(--accent-purple);
+            background: rgba(59,165,181,0.15);
+            color: var(--accent-teal);
         }
 
         .badge-obvious {
@@ -562,7 +563,7 @@
                 top: var(--nav-height);
                 left: 0;
                 right: 0;
-                background: rgba(15, 20, 25, 0.98);
+                background: rgba(16, 28, 40, 0.98);
                 backdrop-filter: blur(20px);
                 flex-direction: column;
                 padding: 16px;
@@ -592,7 +593,7 @@
             }
 
             .nav-link.active {
-                background: rgba(79, 143, 247, 0.1);
+                background: rgba(59, 165, 181, 0.1);
             }
 
             .nav-hamburger {
@@ -835,7 +836,7 @@
                 this.mouse = { x: null, y: null, radius: 150 };
                 this.particleCount = 80;
                 this.connectionDistance = 120;
-                this.colors = ['#4f8ff7', '#8b5cf6', '#06b6d4', '#10b981'];
+                this.colors = ['#3ba5b5', '#0dd3ce', '#7ee8fa', '#3edbd5'];
 
                 this.resize();
                 this.init();
