@@ -1,0 +1,24 @@
+[Unit]
+Description=PolySnap Web App (Gunicorn)
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/poly
+EnvironmentFile=/home/ubuntu/poly/.env
+ExecStart=/home/ubuntu/poly/venv/bin/gunicorn \
+    --config /home/ubuntu/poly/deploy/gunicorn.conf.py \
+    polyscalping.server:app
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=polysnap
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
