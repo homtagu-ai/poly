@@ -376,6 +376,83 @@
     .empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
     .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
 
+    /* Atom Preloader Animation */
+    .atom-loader-wrap {
+        position: relative;
+        width: 160px;
+        height: 160px;
+        margin: 0 auto 24px;
+    }
+    .atom-loader-img {
+        width: 160px;
+        height: 160px;
+        object-fit: contain;
+        animation: atomPulse 2.5s ease-in-out infinite, atomSpin 8s linear infinite;
+        filter: drop-shadow(0 0 20px rgba(120, 220, 80, 0.4));
+    }
+    .atom-loader-wrap::before {
+        content: '';
+        position: absolute;
+        inset: -20px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(120, 220, 80, 0.12) 0%, transparent 70%);
+        animation: atomGlow 2.5s ease-in-out infinite;
+    }
+    @keyframes atomPulse {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(120, 220, 80, 0.4)); }
+        50% { transform: scale(1.08); filter: drop-shadow(0 0 35px rgba(120, 220, 80, 0.7)); }
+    }
+    @keyframes atomSpin {
+        0% { transform: rotate(0deg) scale(1); }
+        25% { transform: rotate(90deg) scale(1.05); }
+        50% { transform: rotate(180deg) scale(1); }
+        75% { transform: rotate(270deg) scale(1.05); }
+        100% { transform: rotate(360deg) scale(1); }
+    }
+    @keyframes atomGlow {
+        0%, 100% { opacity: 0.4; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.15); }
+    }
+
+    /* Progress atom (smaller version for analysis) */
+    .atom-progress-wrap {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+    }
+    .atom-progress-img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        animation: atomPulse 1.8s ease-in-out infinite, atomSpin 4s linear infinite;
+        filter: drop-shadow(0 0 15px rgba(120, 220, 80, 0.5));
+    }
+    .atom-progress-wrap::before {
+        content: '';
+        position: absolute;
+        inset: -12px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(120, 220, 80, 0.15) 0%, transparent 70%);
+        animation: atomGlow 1.8s ease-in-out infinite;
+    }
+
+    /* Loading text animation */
+    .loading-text {
+        font-size: 15px;
+        color: var(--text-secondary);
+        animation: textFade 2s ease-in-out infinite;
+    }
+    .loading-subtext {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 8px;
+    }
+    @keyframes textFade {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+
     /* Tabs */
     .result-tabs {
         display: flex;
@@ -524,9 +601,11 @@
 
     <div class="results blur-fade" style="--delay: 4;" id="results">
         <div class="empty">
-            <div class="empty-icon">📊</div>
-            <p>No event selected</p>
-            <small>Paste an event URL or click a hot event to start comprehensive analysis</small>
+            <div class="atom-loader-wrap">
+                <img src="{{ url_for('static', filename='images/atom-loader.png') }}" class="atom-loader-img" alt="AI Analyzer">
+            </div>
+            <p class="loading-text">No event selected</p>
+            <small class="loading-subtext">Paste an event URL or click a hot event to start comprehensive analysis</small>
         </div>
     </div>
 </div>
@@ -617,8 +696,10 @@ function showProgress() {
 
     document.getElementById('results').innerHTML = `
         <div class="progress-section">
-            <div class="progress-title">
-                <span class="spinner" style="width:20px;height:20px;border-width:2px"></span>
+            <div class="atom-progress-wrap">
+                <img src="/static/images/atom-loader.png" class="atom-progress-img" alt="Analyzing">
+            </div>
+            <div class="progress-title" style="justify-content:center">
                 Running Comprehensive Analysis...
             </div>
             <div class="progress-bar-wrap">
