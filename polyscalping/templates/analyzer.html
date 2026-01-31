@@ -387,7 +387,7 @@
         width: 160px;
         height: 160px;
         object-fit: contain;
-        animation: atomPulse 2.5s ease-in-out infinite, atomSpin 8s linear infinite;
+        animation: atomPulse 2.5s ease-in-out infinite;
         filter: drop-shadow(0 0 20px rgba(120, 220, 80, 0.4));
     }
     .atom-loader-wrap::before {
@@ -401,13 +401,6 @@
     @keyframes atomPulse {
         0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(120, 220, 80, 0.4)); }
         50% { transform: scale(1.08); filter: drop-shadow(0 0 35px rgba(120, 220, 80, 0.7)); }
-    }
-    @keyframes atomSpin {
-        0% { transform: rotate(0deg) scale(1); }
-        25% { transform: rotate(90deg) scale(1.05); }
-        50% { transform: rotate(180deg) scale(1); }
-        75% { transform: rotate(270deg) scale(1.05); }
-        100% { transform: rotate(360deg) scale(1); }
     }
     @keyframes atomGlow {
         0%, 100% { opacity: 0.4; transform: scale(1); }
@@ -425,7 +418,7 @@
         width: 80px;
         height: 80px;
         object-fit: contain;
-        animation: atomPulse 1.8s ease-in-out infinite, atomSpin 4s linear infinite;
+        animation: atomPulse 1.8s ease-in-out infinite;
         filter: drop-shadow(0 0 15px rgba(120, 220, 80, 0.5));
     }
     .atom-progress-wrap::before {
