@@ -376,58 +376,36 @@
     .empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
     .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
 
-    /* Atom Preloader Animation */
+    /* Mascot Preloader */
     .atom-loader-wrap {
         position: relative;
-        width: 160px;
-        height: 160px;
+        width: 480px;
+        height: 480px;
         margin: 0 auto 24px;
     }
     .atom-loader-img {
-        width: 160px;
-        height: 160px;
+        width: 480px;
+        height: 480px;
         object-fit: contain;
-        animation: atomPulse 2.5s ease-in-out infinite;
-        filter: drop-shadow(0 0 20px rgba(120, 220, 80, 0.4));
     }
-    .atom-loader-wrap::before {
-        content: '';
-        position: absolute;
-        inset: -20px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(120, 220, 80, 0.12) 0%, transparent 70%);
-        animation: atomGlow 2.5s ease-in-out infinite;
-    }
-    @keyframes atomPulse {
-        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(120, 220, 80, 0.4)); }
-        50% { transform: scale(1.08); filter: drop-shadow(0 0 35px rgba(120, 220, 80, 0.7)); }
-    }
-    @keyframes atomGlow {
-        0%, 100% { opacity: 0.4; transform: scale(1); }
-        50% { opacity: 1; transform: scale(1.15); }
+    @media (max-width: 600px) {
+        .atom-loader-wrap, .atom-loader-img {
+            width: 260px;
+            height: 260px;
+        }
     }
 
-    /* Progress atom (smaller version for analysis) */
+    /* Progress mascot (smaller version for analysis) */
     .atom-progress-wrap {
         position: relative;
-        width: 80px;
-        height: 80px;
+        width: 120px;
+        height: 120px;
         margin: 0 auto 20px;
     }
     .atom-progress-img {
-        width: 80px;
-        height: 80px;
+        width: 120px;
+        height: 120px;
         object-fit: contain;
-        animation: atomPulse 1.8s ease-in-out infinite;
-        filter: drop-shadow(0 0 15px rgba(120, 220, 80, 0.5));
-    }
-    .atom-progress-wrap::before {
-        content: '';
-        position: absolute;
-        inset: -12px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(120, 220, 80, 0.15) 0%, transparent 70%);
-        animation: atomGlow 1.8s ease-in-out infinite;
     }
 
     /* Loading text animation */
