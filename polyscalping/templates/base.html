@@ -235,6 +235,31 @@
             border-radius: 1px;
         }
 
+        /* "NEW" badge on nav links */
+        .nav-badge-new {
+            display: inline-block;
+            padding: 1px 6px;
+            margin-left: 6px;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #000;
+            background: linear-gradient(135deg, #0dd3ce, #3edbd5);
+            border-radius: 4px;
+            line-height: 1.5;
+            vertical-align: middle;
+            position: relative;
+            top: -1px;
+            animation: badgePulse 2s ease-in-out infinite;
+            box-shadow: 0 0 8px rgba(13, 211, 206, 0.4);
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { box-shadow: 0 0 6px rgba(13, 211, 206, 0.3); }
+            50% { box-shadow: 0 0 14px rgba(13, 211, 206, 0.6); }
+        }
+
         /* Mobile hamburger menu */
         .nav-hamburger {
             display: none;
@@ -798,7 +823,7 @@
             <a href="/markets" class="nav-link {% if page == 'markets' %}active{% endif %}">Markets</a>
             <a href="/whales" class="nav-link {% if page == 'whales' %}active{% endif %}">Whales</a>
             <a href="/calculator" class="nav-link {% if page == 'calculator' %}active{% endif %}">Calculator</a>
-            <a href="/analyzer" class="nav-link {% if page == 'analyzer' %}active{% endif %}">Analyzer</a>
+            <a href="/analyzer" class="nav-link {% if page == 'analyzer' %}active{% endif %}">Analyzer <span class="nav-badge-new">NEW</span></a>
         </div>
 
         <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileMenu()">
