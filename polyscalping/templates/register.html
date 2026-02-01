@@ -485,12 +485,8 @@ async function handleSendCode() {
         return;
     }
 
-    btn.textContent = 'Code Sent';
     showMessage('Verification code sent to your email!', 'success');
-    setTimeout(() => {
-        btn.disabled = false;
-        btn.textContent = 'Resend';
-    }, 30000);
+    startCountdown(btn);
 }
 
 async function handleCreateAccount() {
@@ -538,6 +534,22 @@ async function handleCreateAccount() {
             window.location.href = '/login';
         }, 1500);
     }
+}
+
+function startCountdown(btn) {
+    let seconds = 60;
+    btn.disabled = true;
+    btn.textContent = seconds + 's';
+    const interval = setInterval(() => {
+        seconds--;
+        if (seconds <= 0) {
+            clearInterval(interval);
+            btn.disabled = false;
+            btn.textContent = 'Resend';
+        } else {
+            btn.textContent = seconds + 's';
+        }
+    }, 1000);
 }
 
 function showMessage(text, type) {
