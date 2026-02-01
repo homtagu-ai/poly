@@ -1445,6 +1445,10 @@ def calculator_page():
 def analyzer_page():
     return render_template("analyzer.html", page="analyzer")
 
+@app.route("/settings")
+def settings_page():
+    return render_template("settings.html", page="settings")
+
 # ============================================================================
 # ROUTES - API
 # ============================================================================

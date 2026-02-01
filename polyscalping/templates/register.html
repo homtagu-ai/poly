@@ -464,6 +464,7 @@ try {
 })();
 
 async function handleSendCode() {
+    console.log('[DEBUG] handleSendCode called');
     const email = document.getElementById('emailInput').value;
     const password = document.getElementById('passwordInput').value;
     const username = document.getElementById('usernameInput').value;
@@ -489,28 +490,50 @@ async function handleSendCode() {
 
     btn.disabled = true;
     btn.textContent = 'Sending...';
+    console.log('[DEBUG] Calling supabase.auth.signUp for:', email);
 
-    const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-            data: {
-                username: username,
-                agreed_to_terms: document.getElementById('termsCheckbox').checked,
-                agreed_to_marketing: document.getElementById('marketingCheckbox').checked
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    username: username,
+                    agreed_to_terms: document.getElementById('termsCheckbox').checked,
+                    agreed_to_marketing: document.getElementById('marketingCheckbox').checked
+                }
             }
-        }
-    });
+        });
 
-    if (error) {
-        showMessage(error.message, 'error');
+        console.log('[DEBUG] signUp response data:', JSON.stringify(data, null, 2));
+        console.log('[DEBUG] signUp response error:', error);
+
+        if (error) {
+            console.error('[DEBUG] signUp error:', error.message);
+            showMessage(error.message, 'error');
+            btn.disabled = false;
+            btn.textContent = 'Send Code';
+            return;
+        }
+
+        // Check if user already exists (identities will be empty)
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+            console.warn('[DEBUG] User already exists! identities is empty.');
+            showMessage('An account with this email already exists. Please login instead.', 'error');
+            btn.disabled = false;
+            btn.textContent = 'Send Code';
+            return;
+        }
+
+        console.log('[DEBUG] Success! Starting countdown.');
+        showMessage('Verification code sent to your email! Check spam folder too.', 'success');
+        startCountdown(btn);
+    } catch (e) {
+        console.error('[DEBUG] Unexpected exception in handleSendCode:', e);
+        showMessage('Unexpected error: ' + e.message, 'error');
         btn.disabled = false;
         btn.textContent = 'Send Code';
-        return;
     }
-
-    showMessage('Verification code sent to your email!', 'success');
-    startCountdown(btn);
 }
 
 async function handleCreateAccount() {
