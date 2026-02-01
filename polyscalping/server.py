@@ -1402,6 +1402,14 @@ def fetch_event_analysis(slug):
 def landing():
     return render_template("landing.html")
 
+@app.route("/register")
+def register_page():
+    return render_template("register.html")
+
+@app.route("/login")
+def login_page():
+    return render_template("login.html")
+
 @app.route("/dashboard")
 def dashboard_page():
     return render_template("dashboard.html", page="dashboard")
