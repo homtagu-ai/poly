@@ -196,41 +196,6 @@
         color: var(--accent-red);
     }
 
-    .avatar-section {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 24px;
-        padding-bottom: 24px;
-        border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .avatar-large {
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        background: var(--bg-secondary);
-        border: 2px solid var(--border);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        font-weight: 700;
-        color: var(--accent-blue);
-        flex-shrink: 0;
-    }
-
-    .avatar-info h3 {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 4px;
-    }
-
-    .avatar-info p {
-        font-size: 13px;
-        color: var(--text-muted);
-    }
-
     .danger-btn {
         padding: 10px 20px;
         background: transparent;
@@ -279,14 +244,6 @@
     <div class="settings-card animated-border-box blur-fade" style="--delay: 1">
         <h2 class="settings-card-title">Profile Settings</h2>
         <p class="settings-card-desc">Update your personal information and preferences</p>
-
-        <div class="avatar-section">
-            <div class="avatar-large" id="avatarInitial">?</div>
-            <div class="avatar-info">
-                <h3 id="profileName">Loading...</h3>
-                <p id="profileEmail">Loading...</p>
-            </div>
-        </div>
 
         <div class="form-grid">
             <div class="form-group">
