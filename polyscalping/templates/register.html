@@ -424,10 +424,29 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const supabase = window.supabase.createClient(
-    '{{ SUPABASE_URL }}',
-    '{{ SUPABASE_ANON_KEY }}'
-);
+// Debug: log what Flask injected
+console.log('[PolyHunter] SUPABASE_URL =', '{{ SUPABASE_URL }}');
+console.log('[PolyHunter] SUPABASE_ANON_KEY =', '{{ SUPABASE_ANON_KEY }}'.substring(0, 20) + '...');
+
+let supabase;
+try {
+    if (!window.supabase) throw new Error('Supabase JS SDK not loaded — CDN blocked?');
+    if (!'{{ SUPABASE_URL }}'.startsWith('https://')) throw new Error('SUPABASE_URL is empty or invalid: "{{ SUPABASE_URL }}"');
+    supabase = window.supabase.createClient(
+        '{{ SUPABASE_URL }}',
+        '{{ SUPABASE_ANON_KEY }}'
+    );
+    console.log('[PolyHunter] Supabase client initialized OK');
+} catch (e) {
+    console.error('[PolyHunter] Supabase init FAILED:', e.message);
+    document.addEventListener('DOMContentLoaded', function() {
+        const msg = document.getElementById('formMessage');
+        if (msg) {
+            msg.textContent = 'Error: ' + e.message + ' — Check server config.';
+            msg.className = 'form-message error';
+        }
+    });
+}
 
 // Pre-fill email from query param (from Klaviyo link)
 (function() {
@@ -449,6 +468,11 @@ async function handleSendCode() {
     const password = document.getElementById('passwordInput').value;
     const username = document.getElementById('usernameInput').value;
     const btn = document.getElementById('sendCodeBtn');
+
+    if (!supabase) {
+        showMessage('Supabase not initialized. Check browser console for details.', 'error');
+        return;
+    }
 
     if (!username) {
         showMessage('Please enter a username.', 'error');
@@ -495,6 +519,11 @@ async function handleCreateAccount() {
     const password = document.getElementById('passwordInput').value;
     const code = document.getElementById('codeInput').value;
     const terms = document.getElementById('termsCheckbox').checked;
+
+    if (!supabase) {
+        showMessage('Supabase not initialized. Check browser console for details.', 'error');
+        return;
+    }
 
     if (!username || !email || !password) {
         showMessage('Please fill in all fields.', 'error');
