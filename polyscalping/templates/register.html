@@ -422,7 +422,13 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const supabase = window.supabase.createClient(
+    '{{ SUPABASE_URL }}',
+    '{{ SUPABASE_ANON_KEY }}'
+);
+
 // Pre-fill email from query param (from Klaviyo link)
 (function() {
     const params = new URLSearchParams(window.location.search);
@@ -432,12 +438,22 @@
     }
 })();
 
-// Placeholder functions — will be wired to Supabase later
-function handleSendCode() {
+// Redirect if already logged in
+(async function() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) window.location.href = '/dashboard';
+})();
+
+async function handleSendCode() {
     const email = document.getElementById('emailInput').value;
     const password = document.getElementById('passwordInput').value;
+    const username = document.getElementById('usernameInput').value;
     const btn = document.getElementById('sendCodeBtn');
 
+    if (!username) {
+        showMessage('Please enter a username.', 'error');
+        return;
+    }
     if (!email) {
         showMessage('Please enter your email first.', 'error');
         return;
@@ -450,30 +466,34 @@ function handleSendCode() {
     btn.disabled = true;
     btn.textContent = 'Sending...';
 
-    // TODO: Replace with Supabase signUp() call
-    // const { error } = await supabase.auth.signUp({
-    //     email: email,
-    //     password: password,
-    //     options: {
-    //         data: {
-    //             username: document.getElementById('usernameInput').value,
-    //             agreed_to_terms: document.getElementById('termsCheckbox').checked,
-    //             agreed_to_marketing: document.getElementById('marketingCheckbox').checked
-    //         }
-    //     }
-    // });
+    const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            data: {
+                username: username,
+                agreed_to_terms: document.getElementById('termsCheckbox').checked,
+                agreed_to_marketing: document.getElementById('marketingCheckbox').checked
+            }
+        }
+    });
 
+    if (error) {
+        showMessage(error.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Send Code';
+        return;
+    }
+
+    btn.textContent = 'Code Sent';
+    showMessage('Verification code sent to your email!', 'success');
     setTimeout(() => {
-        btn.textContent = 'Code Sent';
-        showMessage('Verification code sent to your email!', 'success');
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.textContent = 'Resend';
-        }, 30000);
-    }, 1000);
+        btn.disabled = false;
+        btn.textContent = 'Resend';
+    }, 30000);
 }
 
-function handleCreateAccount() {
+async function handleCreateAccount() {
     const username = document.getElementById('usernameInput').value;
     const email = document.getElementById('emailInput').value;
     const password = document.getElementById('passwordInput').value;
@@ -497,20 +517,27 @@ function handleCreateAccount() {
     btn.disabled = true;
     btn.textContent = 'Creating account...';
 
-    // TODO: Replace with Supabase verifyOtp() call
-    // const { data, error } = await supabase.auth.verifyOtp({
-    //     email: email,
-    //     token: code,
-    //     type: 'signup'
-    // });
-    // if (data.user) window.location.href = '/login';
+    const { data, error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: code,
+        type: 'signup'
+    });
 
-    setTimeout(() => {
+    if (error) {
+        showMessage(error.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+        return;
+    }
+
+    if (data.user) {
+        // Sign out so user logs in fresh
+        await supabase.auth.signOut();
         showMessage('Account created! Redirecting to login...', 'success');
         setTimeout(() => {
             window.location.href = '/login';
         }, 1500);
-    }, 1000);
+    }
 }
 
 function showMessage(text, type) {

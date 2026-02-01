@@ -383,8 +383,20 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-function handleSignIn() {
+const supabase = window.supabase.createClient(
+    '{{ SUPABASE_URL }}',
+    '{{ SUPABASE_ANON_KEY }}'
+);
+
+// Redirect if already logged in
+(async function() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) window.location.href = '/dashboard';
+})();
+
+async function handleSignIn() {
     const email = document.getElementById('emailInput').value;
     const password = document.getElementById('passwordInput').value;
     const btn = document.getElementById('signInBtn');
@@ -397,19 +409,24 @@ function handleSignIn() {
     btn.disabled = true;
     btn.textContent = 'Signing in...';
 
-    // TODO: Replace with Supabase signInWithPassword() call
-    // const { data, error } = await supabase.auth.signInWithPassword({
-    //     email: email,
-    //     password: password
-    // });
-    // if (data.user) window.location.href = '/dashboard';
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
 
-    setTimeout(() => {
+    if (error) {
+        showMessage(error.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+        return;
+    }
+
+    if (data.user) {
         showMessage('Signed in! Redirecting...', 'success');
         setTimeout(() => {
             window.location.href = '/dashboard';
-        }, 1000);
-    }, 800);
+        }, 800);
+    }
 }
 
 function showMessage(text, type) {

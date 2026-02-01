@@ -44,6 +44,17 @@ app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 CORS(app)
 
+# Supabase config — injected into all templates
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+
+@app.context_processor
+def inject_supabase():
+    return {
+        'SUPABASE_URL': SUPABASE_URL,
+        'SUPABASE_ANON_KEY': SUPABASE_ANON_KEY,
+    }
+
 # Thread pool for async operations
 executor = ThreadPoolExecutor(max_workers=4)
 

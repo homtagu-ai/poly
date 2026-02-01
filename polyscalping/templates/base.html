@@ -804,6 +804,93 @@
         }
 
         [hidden] { display: none !important; }
+
+        /* Nav user menu */
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: 16px;
+            flex-shrink: 0;
+        }
+        .nav-username {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nav-logout-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        .nav-logout-btn:hover {
+            color: var(--accent-red);
+            border-color: var(--accent-red);
+        }
+
+        /* Upgrade popup overlay */
+        .upgrade-popup-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(6px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .upgrade-popup-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px 36px;
+            max-width: 440px;
+            width: 90%;
+            text-align: center;
+        }
+        .upgrade-popup-card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        .upgrade-popup-card p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+        .upgrade-btn {
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            color: white;
+            padding: 14px 36px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
+        }
+        .upgrade-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .nav-username { display: none; }
+            .nav-user { margin-left: 8px; }
+        }
     </style>
     {% block extra_styles %}{% endblock %}
 </head>
@@ -840,6 +927,13 @@
                 </svg>
             </span>
             <input type="text" placeholder="Search markets or traders..." id="globalSearch">
+        </div>
+
+        <div class="nav-user" id="navUser" style="display:none;">
+            <span class="nav-username" id="navUsername"></span>
+            <button class="nav-logout-btn" onclick="handleLogout()" title="Sign out">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
         </div>
     </nav>
 
@@ -1035,6 +1129,68 @@
                 document.getElementById('navHamburger').classList.remove('active');
             });
         });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase auth gating — runs on every app page
+        const supabase = window.supabase.createClient(
+            '{{ SUPABASE_URL }}',
+            '{{ SUPABASE_ANON_KEY }}'
+        );
+
+        (async function authGate() {
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                window.location.href = '/login';
+                return;
+            }
+
+            // Show user info in nav
+            const navUser = document.getElementById('navUser');
+            const navUsername = document.getElementById('navUsername');
+            if (navUser && navUsername) {
+                // Try to get username from profile, fallback to email
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('username, is_subscribed, subscription_status')
+                    .eq('id', user.id)
+                    .single();
+
+                navUsername.textContent = profile?.username || user.email.split('@')[0];
+                navUser.style.display = 'flex';
+
+                // Show upgrade popup if not subscribed
+                if (profile && !profile.is_subscribed) {
+                    showUpgradePopup();
+                }
+            }
+        })();
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            window.location.href = '/login';
+        }
+
+        function showUpgradePopup() {
+            const popup = document.createElement('div');
+            popup.id = 'upgrade-popup';
+            popup.innerHTML = `
+                <div class="upgrade-popup-overlay">
+                    <div class="upgrade-popup-card">
+                        <h2>Unlock Premium Features</h2>
+                        <p>Get unlimited AI analysis, real-time signals, whale tracking, and more.</p>
+                        <button class="upgrade-btn" onclick="startCheckout()">Upgrade Now</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(popup);
+        }
+
+        function startCheckout() {
+            // Placeholder — will be wired to Stripe later
+            alert('Stripe checkout coming soon! For now, all test accounts have full access.');
+        }
     </script>
     {% block extra_scripts %}{% endblock %}
 </body>
