@@ -813,13 +813,13 @@
 
     <nav>
         <div class="nav-brand">
-            <a href="/" class="nav-brand-link">
+            <a href="/dashboard" class="nav-brand-link">
                 <img src="{{ url_for('static', filename='images/polyhunter-logo.png') }}" alt="PolyHunter" class="nav-logo-img">
             </a>
         </div>
 
         <div class="nav-links" id="navLinks">
-            <a href="/" class="nav-link {% if page == 'dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="/dashboard" class="nav-link {% if page == 'dashboard' %}active{% endif %}">Dashboard</a>
             <a href="/markets" class="nav-link {% if page == 'markets' %}active{% endif %}">Markets</a>
             <a href="/whales" class="nav-link {% if page == 'whales' %}active{% endif %}">Whales</a>
             <a href="/calculator" class="nav-link {% if page == 'calculator' %}active{% endif %}">Calculator</a>

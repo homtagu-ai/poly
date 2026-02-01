@@ -1399,7 +1399,11 @@ def fetch_event_analysis(slug):
 # ROUTES - PAGES
 # ============================================================================
 @app.route("/")
-def index():
+def landing():
+    return render_template("landing.html")
+
+@app.route("/dashboard")
+def dashboard_page():
     return render_template("dashboard.html", page="dashboard")
 
 @app.route("/markets")
