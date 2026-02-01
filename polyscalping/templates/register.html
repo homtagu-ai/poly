@@ -91,15 +91,30 @@
         }
 
         .auth-tagline {
-            margin-top: 32px;
-            font-size: 22px;
+            margin-top: 36px;
+            font-size: 36px;
             font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--accent-cyan);
+            font-style: italic;
+            color: #ffffff;
             text-align: center;
-            font-family: 'Inter', sans-serif;
-            text-shadow: 0 0 20px rgba(13, 211, 206, 0.3);
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.3;
+            max-width: 360px;
+        }
+        .auth-tagline .line-accent {
+            position: relative;
+            display: inline;
+        }
+        .auth-tagline .line-accent::after {
+            content: '';
+            position: absolute;
+            left: -10%;
+            right: -10%;
+            top: 55%;
+            height: 3px;
+            background: #f97316;
+            transform: rotate(-6deg);
+            border-radius: 2px;
         }
         @keyframes mascotFloat {
             0%, 100% { transform: translateY(0); }
@@ -358,7 +373,7 @@
     <!-- LEFT — Mascot + Tagline (hidden on mobile/tablet) -->
     <div class="auth-left">
         <img src="{{ url_for('static', filename='images/mascot.png') }}" alt="PolyHunter" class="auth-mascot">
-        <p class="auth-tagline">Track. Analyze. Hunt. Win.</p>
+        <p class="auth-tagline">Where Smart Money<br><span class="line-accent">Hunts Predictions</span></p>
     </div>
 
     <!-- RIGHT — Registration Form -->
