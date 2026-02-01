@@ -231,14 +231,6 @@
         color: var(--text-muted);
     }
 
-    .danger-zone {
-        border-color: rgba(239, 68, 68, 0.2);
-    }
-
-    .danger-zone .settings-card-title {
-        color: var(--accent-red);
-    }
-
     .danger-btn {
         padding: 10px 20px;
         background: transparent;
@@ -325,16 +317,6 @@
                 </select>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Preferred Currency</label>
-                <select class="form-select" id="currency">
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="USDC">USDC</option>
-                </select>
-            </div>
-
             <div class="form-group full-width">
                 <label class="form-label">Trading Bio</label>
                 <textarea class="form-textarea" id="tradingBio" placeholder="Describe your trading style, favorite markets, etc."></textarea>
@@ -349,49 +331,8 @@
         </div>
     </div>
 
-    <!-- Notification Preferences -->
+    <!-- Sign Out -->
     <div class="settings-card blur-fade" style="--delay: 2">
-        <h2 class="settings-card-title">Notification Preferences</h2>
-        <p class="settings-card-desc">Choose what updates you want to receive</p>
-
-        <div style="display: flex; flex-direction: column; gap: 16px;">
-            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                <input type="checkbox" id="notifyEmail" style="width: 18px; height: 18px; accent-color: var(--accent-blue);">
-                <div>
-                    <div style="font-size: 14px; font-weight: 500;">Email notifications</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Receive market alerts and updates via email</div>
-                </div>
-            </label>
-
-            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                <input type="checkbox" id="notifyWhales" checked style="width: 18px; height: 18px; accent-color: var(--accent-blue);">
-                <div>
-                    <div style="font-size: 14px; font-weight: 500;">Whale activity alerts</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Get notified when large trades happen on your watched markets</div>
-                </div>
-            </label>
-
-            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                <input type="checkbox" id="notifyMarketing" style="width: 18px; height: 18px; accent-color: var(--accent-blue);">
-                <div>
-                    <div style="font-size: 14px; font-weight: 500;">Product updates & tips</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Occasional emails about new features and trading insights</div>
-                </div>
-            </label>
-        </div>
-
-        <div class="save-row">
-            <button class="save-btn" onclick="saveNotifications()">
-                Save Preferences
-            </button>
-        </div>
-    </div>
-
-    <!-- Danger Zone -->
-    <div class="settings-card danger-zone blur-fade" style="--delay: 3">
-        <h2 class="settings-card-title">Danger Zone</h2>
-        <p class="settings-card-desc">Irreversible actions for your account</p>
-
         <div style="display: flex; align-items: center; justify-content: space-between;">
             <div>
                 <div style="font-size: 14px; font-weight: 500;">Sign out of all devices</div>
@@ -435,12 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('avatarInitial').textContent = (profile.username || user.email)[0].toUpperCase();
 
                 if (profile.timezone) document.getElementById('timezone').value = profile.timezone;
-                if (profile.currency) document.getElementById('currency').value = profile.currency;
                 if (profile.bio) document.getElementById('tradingBio').value = profile.bio;
-
-                document.getElementById('notifyEmail').checked = profile.notify_email || false;
-                document.getElementById('notifyWhales').checked = profile.notify_whales !== false;
-                document.getElementById('notifyMarketing').checked = profile.notify_marketing || false;
             } else {
                 var name = user.user_metadata?.username || user.email.split('@')[0];
                 document.getElementById('displayName').value = name;
@@ -466,7 +402,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 id: user.id,
                 username: document.getElementById('displayName').value,
                 timezone: document.getElementById('timezone').value,
-                currency: document.getElementById('currency').value,
                 bio: document.getElementById('tradingBio').value,
                 updated_at: new Date().toISOString()
             };
@@ -488,34 +423,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         btn.disabled = false;
         btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Changes';
-    };
-
-    window.saveNotifications = async function() {
-        try {
-            var result = await settingsSupabase.auth.getUser();
-            var user = result.data.user;
-            if (!user) return;
-
-            var updates = {
-                id: user.id,
-                notify_email: document.getElementById('notifyEmail').checked,
-                notify_whales: document.getElementById('notifyWhales').checked,
-                notify_marketing: document.getElementById('notifyMarketing').checked,
-                updated_at: new Date().toISOString()
-            };
-
-            var upsertResult = await settingsSupabase
-                .from('profiles')
-                .upsert(updates, { onConflict: 'id' });
-
-            if (upsertResult.error) {
-                showSettingsMessage(upsertResult.error.message, 'error');
-            } else {
-                showSettingsMessage('Notification preferences saved!', 'success');
-            }
-        } catch(e) {
-            showSettingsMessage('Error: ' + e.message, 'error');
-        }
     };
 
     window.signOutAll = async function() {
