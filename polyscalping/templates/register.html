@@ -83,39 +83,9 @@
             padding: 60px 40px;
         }
 
-        .auth-tagline {
-            position: relative;
-            text-align: center;
-        }
-        .auth-tagline h2 {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            font-style: italic;
-            font-weight: 400;
-            font-size: clamp(28px, 3vw, 40px);
-            color: var(--text-primary);
-            line-height: 1.3;
-            letter-spacing: -0.5px;
-        }
-        .auth-tagline .line-strikethrough {
-            position: relative;
-            display: inline-block;
-        }
-        .auth-tagline .line-strikethrough::after {
-            content: '';
-            position: absolute;
-            left: -4%;
-            right: -4%;
-            top: 55%;
-            height: 3px;
-            background: linear-gradient(90deg, #f97316, #fb923c);
-            border-radius: 2px;
-            transform: rotate(-3deg);
-        }
-
         .auth-mascot {
-            width: 220px;
+            width: 340px;
             height: auto;
-            margin-bottom: 40px;
             filter: drop-shadow(0 20px 40px rgba(0,0,0,0.4));
             animation: mascotFloat 4s ease-in-out infinite;
         }
@@ -376,9 +346,6 @@
     <!-- LEFT — Mascot + Tagline (hidden on mobile/tablet) -->
     <div class="auth-left">
         <img src="{{ url_for('static', filename='images/mascot.png') }}" alt="PolyHunter" class="auth-mascot">
-        <div class="auth-tagline">
-            <h2>The future of trading<br><span class="line-strikethrough">is here.</span></h2>
-        </div>
     </div>
 
     <!-- RIGHT — Registration Form -->

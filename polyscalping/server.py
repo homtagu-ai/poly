@@ -1410,6 +1410,10 @@ def register_page():
 def login_page():
     return render_template("login.html")
 
+@app.route("/forgot-password")
+def forgot_password_page():
+    return render_template("forgot-password.html")
+
 @app.route("/dashboard")
 def dashboard_page():
     return render_template("dashboard.html", page="dashboard")
