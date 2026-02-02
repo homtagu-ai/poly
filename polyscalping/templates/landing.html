@@ -801,6 +801,11 @@
             color: var(--text-muted);
             opacity: 0.6;
         }
+        .step-visual--anim {
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+        }
         .step-label {
             font-size: 13px;
             font-weight: 600;
@@ -1641,8 +1646,8 @@
                 <div class="steps-flow">
                     <div class="step-item">
                         <div class="step-num">1</div>
-                        <div class="step-visual">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <div class="step-visual step-visual--anim">
+                            <img id="pasteFrameImg" src="{{ url_for('static', filename='images/paste-frames/frame_000.jpg') }}" alt="Paste URL" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">
                         </div>
                         <div class="step-label">Paste URL</div>
                         <div class="step-sublabel">Drop any event link</div>
@@ -1839,6 +1844,27 @@
         current = (current + 1) % totalFrames;
         img.src = frames[current].src;
     }, 80); // ~12.5 fps
+})();
+
+// Paste URL frame animation
+(function() {
+    const totalFrames = 20;
+    const basePath = "{{ url_for('static', filename='images/paste-frames/') }}";
+    const img = document.getElementById('pasteFrameImg');
+    if (!img) return;
+
+    const frames = [];
+    for (let i = 0; i < totalFrames; i++) {
+        const f = new Image();
+        f.src = basePath + 'frame_' + String(i).padStart(3, '0') + '.jpg';
+        frames.push(f);
+    }
+
+    let current = 0;
+    setInterval(function() {
+        current = (current + 1) % totalFrames;
+        img.src = frames[current].src;
+    }, 100); // ~10 fps
 })();
 </script>
 
