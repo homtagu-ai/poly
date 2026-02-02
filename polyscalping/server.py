@@ -1695,14 +1695,15 @@ def api_stats():
 if __name__ == "__main__":
     import os
     debug = os.getenv("DEBUG", "false").lower() == "true"
+    host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", 5050))
 
     print("\n" + "="*60)
-    print("  POLYSCALPING - Unified Dashboard")
+    print("  POLYHUNTER - Unified Dashboard")
     print("  Full Analysis Pipeline Enabled")
     print("="*60)
-    print(f"  http://localhost:{port}")
+    print(f"  http://{host}:{port}")
     print(f"  Debug: {debug}")
     print("="*60 + "\n")
 
-    app.run(host="0.0.0.0", port=port, debug=debug)
+    app.run(host=host, port=port, debug=debug)

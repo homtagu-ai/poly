@@ -484,6 +484,24 @@
             line-height: 1.6;
             max-width: 440px;
         }
+        /* Hero notebook image */
+        .hero-notebook-img {
+            width: 130%;
+            max-width: 780px;
+            height: auto;
+            border-radius: 8px;
+            filter: drop-shadow(0 20px 60px rgba(0, 0, 0, 0.5));
+            margin-right: -15%;
+        }
+
+        @media (max-width: 768px) {
+            .hero-notebook-img {
+                width: 100%;
+                max-width: 100%;
+                margin-right: 0;
+            }
+        }
+
         /* Laptop mockup container */
         .hero-mockup {
             position: relative;
@@ -1566,62 +1584,7 @@
                 <a href="#final-cta" class="btn-primary">Run Analysis</a>
             </div>
             <div class="hero-mockup blur-fade" style="--delay:3;">
-                <img src="{{ url_for('static', filename='images/mascot.png') }}" alt="PolyHunter Mascot" class="hero-mascot">
-                <div class="laptop">
-                    <div class="laptop-screen">
-                        <div class="mock-dash">
-                            <div class="mock-dash-header">
-                                <div class="mock-dash-dot" style="background:#ef4444;"></div>
-                                <div class="mock-dash-dot" style="background:#f59e0b;"></div>
-                                <div class="mock-dash-dot" style="background:#10b981;"></div>
-                            </div>
-                            <div class="mock-dash-row">
-                                <div class="mock-panel">
-                                    <div class="mock-panel-label">Yes Price</div>
-                                    <div class="mock-panel-value text-green">73.2<span style="font-size:11px;">&cent;</span></div>
-                                    <div class="mock-panel-sub text-green" style="font-size:10px;">+5.4%</div>
-                                </div>
-                                <div class="mock-panel">
-                                    <div class="mock-panel-label">AI Score</div>
-                                    <div class="mock-panel-value text-blue">89</div>
-                                    <div class="mock-panel-sub" style="color:var(--accent-blue);font-size:10px;">Strong Buy</div>
-                                </div>
-                                <div class="mock-panel">
-                                    <div class="mock-panel-label">Volume 24h</div>
-                                    <div class="mock-panel-value" style="color:var(--accent-cyan);">$1.2M</div>
-                                    <div class="mock-panel-sub" style="color:var(--accent-cyan);font-size:10px;">+42%</div>
-                                </div>
-                            </div>
-                            <div class="mock-dash-row" style="flex:2;">
-                                <div class="mock-chart">
-                                    <div class="mock-panel-label">Price History</div>
-                                    <div class="candle-row">
-                                        <div class="candle"><div class="candle-wick" style="height:12px;background:#ef4444;"></div><div class="candle-body" style="height:18px;background:#ef4444;"></div></div>
-                                        <div class="candle"><div class="candle-wick" style="height:8px;background:#ef4444;"></div><div class="candle-body" style="height:14px;background:#ef4444;"></div></div>
-                                        <div class="candle"><div class="candle-wick" style="height:10px;background:#10b981;"></div><div class="candle-body" style="height:20px;background:#10b981;"></div></div>
-                                        <div class="candle"><div class="candle-wick" style="height:6px;background:#10b981;"></div><div class="candle-body" style="height:24px;background:#10b981;"></div></div>
-                                        <div class="candle"><div class="candle-wick" style="height:14px;background:#ef4444;"></div><div class="candle-body" style="height:10px;background:#ef4444;"></div></div>
-                                        <div class="candle"><div class="candle-wick" style="height:8px;background:#10b981;"></div><div class="candle-body" style="height:28px;background:#10b981;"></div></div>
-                                        <div class="candle"><div class="candle-wick" style="height:10px;background:#10b981;"></div><div class="candle-body" style="height:22px;background:#10b981;"></div></div>
-                                        <div class="candle"><div class="candle-wick" style="height:6px;background:#10b981;"></div><div class="candle-body" style="height:32px;background:#10b981;"></div></div>
-                                    </div>
-                                </div>
-                                <div class="mock-panel" style="flex:0.6;">
-                                    <div class="mock-panel-label">AI Analysis</div>
-                                    <div style="margin-top:6px;">
-                                        <div style="font-size:10px;color:var(--success);font-weight:700;margin-bottom:6px;">BUY YES</div>
-                                        <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">Entry: 73.2&cent;</div>
-                                        <div style="font-size:9px;color:var(--success);margin-bottom:4px;">Target: 85.0&cent;</div>
-                                        <div style="font-size:9px;color:var(--danger);">Stop: 65.0&cent;</div>
-                                        <div style="margin-top:8px;font-size:8px;color:var(--text-muted);line-height:1.4;">Whale accumulation detected. 3 wallets added $180K in YES positions.</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="laptop-base"></div>
-                    <div class="laptop-bottom"></div>
-                </div>
+                <img src="{{ url_for('static', filename='images/notebook-hero.png') }}" alt="PolyHunter Dashboard" class="hero-notebook-img">
             </div>
         </div>
     </div>
