@@ -1449,6 +1449,14 @@ def analyzer_page():
 def settings_page():
     return render_template("settings.html", page="settings")
 
+@app.route("/terms")
+def terms_page():
+    return render_template("terms.html")
+
+@app.route("/privacy")
+def privacy_page():
+    return render_template("privacy.html")
+
 # ============================================================================
 # ROUTES - API
 # ============================================================================
