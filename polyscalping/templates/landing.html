@@ -774,13 +774,11 @@
             gap: 24px;
             margin-top: 28px;
             position: relative;
+            align-items: center;
         }
         .step-item {
             text-align: center;
             position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
         .step-num {
             font-family: 'JetBrains Mono', monospace;
@@ -794,8 +792,7 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 24px;
-            height: 160px;
-            width: 100%;
+            min-height: 140px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -809,6 +806,7 @@
             padding: 0;
             overflow: hidden;
             background: var(--bg-secondary);
+            min-height: auto;
         }
         .step-label {
             font-size: 13px;
