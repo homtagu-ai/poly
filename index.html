@@ -657,20 +657,20 @@
             width: max-content;
         }
         .marquee-track span {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
             white-space: nowrap;
-            opacity: 0.7;
-            letter-spacing: 0.5px;
         }
-        .marquee-track .logo-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--primary);
-            display: inline-block;
-            margin-right: 8px;
-            vertical-align: middle;
+        .marquee-track .trust-logo {
+            height: 28px;
+            width: auto;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+            opacity: 0.45;
+            transition: opacity 0.3s;
+        }
+        .marquee-track span:hover .trust-logo {
+            opacity: 0.75;
         }
         @keyframes marqueeScroll {
             0% { transform: translateX(0); }
@@ -1639,23 +1639,17 @@
     <div class="trust-bar-label">Trusted by Polymarket Traders Worldwide</div>
     <div class="marquee-wrap">
         <div class="marquee-track">
-            <span><span class="logo-dot"></span>Polymarket</span>
-            <span><span class="logo-dot"></span>Kalshi</span>
-            <span><span class="logo-dot"></span>Metaculus</span>
-            <span><span class="logo-dot"></span>Manifold</span>
-            <span><span class="logo-dot"></span>PredictIt</span>
-            <span><span class="logo-dot"></span>Augur</span>
-            <span><span class="logo-dot"></span>Gnosis</span>
-            <span><span class="logo-dot"></span>Drift</span>
+            <span><img class="trust-logo" src="polyscalping/static/images/logos/polymarket.png" alt="Polymarket"></span>
+            <span><img class="trust-logo" src="polyscalping/static/images/logos/kalshi.png" alt="Kalshi"></span>
+            <span><img class="trust-logo" src="polyscalping/static/images/logos/yzilabs.png" alt="YZi Labs"></span>
+            <span><img class="trust-logo" src="polyscalping/static/images/logos/limitless.png" alt="Limitless"></span>
+            <span><img class="trust-logo" src="polyscalping/static/images/logos/drift.png" alt="Drift"></span>
             <!-- Duplicate for seamless loop -->
-            <span><span class="logo-dot"></span>Polymarket</span>
-            <span><span class="logo-dot"></span>Kalshi</span>
-            <span><span class="logo-dot"></span>Metaculus</span>
-            <span><span class="logo-dot"></span>Manifold</span>
-            <span><span class="logo-dot"></span>PredictIt</span>
-            <span><span class="logo-dot"></span>Augur</span>
-            <span><span class="logo-dot"></span>Gnosis</span>
-            <span><span class="logo-dot"></span>Drift</span>
+            <span><img class="trust-logo" src="polyscalping/static/images/logos/polymarket.png" alt="Polymarket"></span>
+            <span><img class="trust-logo" src="polyscalping/static/images/logos/kalshi.png" alt="Kalshi"></span>
+            <span><img class="trust-logo" src="polyscalping/static/images/logos/yzilabs.png" alt="YZi Labs"></span>
+            <span><img class="trust-logo" src="polyscalping/static/images/logos/limitless.png" alt="Limitless"></span>
+            <span><img class="trust-logo" src="polyscalping/static/images/logos/drift.png" alt="Drift"></span>
         </div>
     </div>
 </section>
