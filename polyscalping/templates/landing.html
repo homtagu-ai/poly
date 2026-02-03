@@ -1812,89 +1812,59 @@
     </div>
 </section>
 <script>
-(function() {
-    const totalFrames = 50;
-    const basePath = "{{ url_for('static', filename='images/map-frames/') }}";
-    const img = document.getElementById('mapFrameImg');
+// Progressive frame animation — starts instantly, loads frames in background
+function animateFrames(imgId, basePath, totalFrames, fps) {
+    const img = document.getElementById(imgId);
     if (!img) return;
 
-    // Preload all frames
+    const interval = 1000 / fps;
+    const loaded = new Array(totalFrames).fill(false);
     const frames = [];
-    for (let i = 0; i < totalFrames; i++) {
-        const f = new Image();
-        f.src = basePath + 'frame_' + String(i).padStart(3, '0') + '.jpg';
-        frames.push(f);
-    }
+    loaded[0] = true; // frame 0 is already in the src
 
+    // Preload frames in small batches to avoid choking the network
+    let loadIdx = 1;
+    const BATCH = 4;
+    function loadBatch() {
+        for (let b = 0; b < BATCH && loadIdx < totalFrames; b++, loadIdx++) {
+            const f = new Image();
+            const idx = loadIdx;
+            f.onload = function() { loaded[idx] = true; };
+            f.src = basePath + 'frame_' + String(idx).padStart(3, '0') + '.jpg';
+            frames[idx] = f;
+        }
+        if (loadIdx < totalFrames) {
+            setTimeout(loadBatch, 50);
+        }
+    }
+    frames[0] = img; // reuse the already-loaded img element
+    loadBatch();
+
+    // Start animating immediately — skip frames that haven't loaded yet
     let current = 0;
     setInterval(function() {
-        current = (current + 1) % totalFrames;
-        img.src = frames[current].src;
-    }, 80); // ~12.5 fps
-})();
+        const next = (current + 1) % totalFrames;
+        if (loaded[next] && frames[next]) {
+            current = next;
+            img.src = frames[current].src;
+        } else {
+            // Jump to next loaded frame
+            for (let i = 1; i < totalFrames; i++) {
+                const try_ = (current + i) % totalFrames;
+                if (loaded[try_] && frames[try_]) {
+                    current = try_;
+                    img.src = frames[current].src;
+                    break;
+                }
+            }
+        }
+    }, interval);
+}
 
-// Analyze step frame animation
-(function() {
-    const totalFrames = 20;
-    const basePath = "{{ url_for('static', filename='images/paste-frames/') }}";
-    const img = document.getElementById('pasteFrameImg');
-    if (!img) return;
-
-    const frames = [];
-    for (let i = 0; i < totalFrames; i++) {
-        const f = new Image();
-        f.src = basePath + 'frame_' + String(i).padStart(3, '0') + '.jpg';
-        frames.push(f);
-    }
-
-    let current = 0;
-    setInterval(function() {
-        current = (current + 1) % totalFrames;
-        img.src = frames[current].src;
-    }, 100); // ~10 fps
-})();
-
-// Paste URL step frame animation
-(function() {
-    const totalFrames = 30;
-    const basePath = "{{ url_for('static', filename='images/url-frames/') }}";
-    const img = document.getElementById('urlFrameImg');
-    if (!img) return;
-
-    const frames = [];
-    for (let i = 0; i < totalFrames; i++) {
-        const f = new Image();
-        f.src = basePath + 'frame_' + String(i).padStart(3, '0') + '.jpg';
-        frames.push(f);
-    }
-
-    let current = 0;
-    setInterval(function() {
-        current = (current + 1) % totalFrames;
-        img.src = frames[current].src;
-    }, 100); // ~10 fps
-})();
-
-// Trade step (numbers) frame animation
-(function() {
-    const totalFrames = 82;
-    const basePath = "{{ url_for('static', filename='images/numbers/') }}";
-    const img = document.getElementById('numbersFrameImg');
-    if (!img) return;
-
-    const frames = [];
-    for (let i = 0; i < totalFrames; i++) {
-        const f = new Image();
-        f.src = basePath + 'frame_' + String(i).padStart(3, '0') + '.jpg';
-        frames.push(f);
-    }
-
-    let current = 0;
-    setInterval(function() {
-        current = (current + 1) % totalFrames;
-        img.src = frames[current].src;
-    }, 80); // ~12.5 fps
-})();
+animateFrames('mapFrameImg',   "{{ url_for('static', filename='images/map-frames/') }}",   50, 12);
+animateFrames('pasteFrameImg', "{{ url_for('static', filename='images/paste-frames/') }}", 20, 10);
+animateFrames('urlFrameImg',   "{{ url_for('static', filename='images/url-frames/') }}",   30, 10);
+animateFrames('numbersFrameImg', "{{ url_for('static', filename='images/numbers/') }}",    82, 12);
 </script>
 
 <!-- ===== TESTIMONIALS — 4 Column ===== -->

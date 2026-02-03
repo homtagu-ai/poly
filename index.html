@@ -2297,26 +2297,39 @@ class ParticlesBackground {
 // Initialize particles
 new ParticlesBackground('particles-canvas');
 
-// Trade step (numbers) frame animation
-(function() {
-    const totalFrames = 82;
-    const basePath = 'numbers/ssstwitter.com_1770071604446_';
-    const img = document.getElementById('numbersFrameImg');
+// Progressive frame animation
+function animateFrames(imgId, basePath, totalFrames, fps, pad3) {
+    const img = document.getElementById(imgId);
     if (!img) return;
-
+    const interval = 1000 / fps;
+    const loaded = new Array(totalFrames).fill(false);
     const frames = [];
-    for (let i = 0; i < totalFrames; i++) {
-        const f = new Image();
-        f.src = basePath + String(i).padStart(3, '0') + '.jpg';
-        frames.push(f);
+    loaded[0] = true;
+    let loadIdx = 1;
+    const BATCH = 4;
+    function loadBatch() {
+        for (let b = 0; b < BATCH && loadIdx < totalFrames; b++, loadIdx++) {
+            const f = new Image();
+            const idx = loadIdx;
+            f.onload = function() { loaded[idx] = true; };
+            f.src = basePath + (pad3 ? String(idx).padStart(3, '0') : String(idx).padStart(3, '0')) + '.jpg';
+            frames[idx] = f;
+        }
+        if (loadIdx < totalFrames) setTimeout(loadBatch, 50);
     }
-
+    frames[0] = img;
+    loadBatch();
     let current = 0;
     setInterval(function() {
-        current = (current + 1) % totalFrames;
-        img.src = frames[current].src;
-    }, 80);
-})();
+        const next = (current + 1) % totalFrames;
+        if (loaded[next] && frames[next]) {
+            current = next;
+            img.src = frames[current].src;
+        }
+    }, interval);
+}
+
+animateFrames('numbersFrameImg', 'numbers/ssstwitter.com_1770071604446_', 82, 12);
 </script>
 
 </body>
