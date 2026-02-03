@@ -1230,19 +1230,17 @@
             box-shadow: 0 0 40px rgba(59,165,181,0.1);
         }
         .pricing-badge {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--primary);
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
             color: white;
             font-size: 11px;
             font-weight: 700;
-            padding: 4px 14px;
+            padding: 5px 16px;
             border-radius: var(--radius-pill);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             white-space: nowrap;
+            margin-bottom: 12px;
         }
         .pricing-plan-name {
             font-size: 14px;
@@ -2080,31 +2078,31 @@ animateFrames('numbersFrameImg', "{{ url_for('static', filename='images/numbers/
 <section class="pricing-section" id="pricing">
     <div class="container">
         <div class="section-header blur-fade" style="--delay:1;">
-            <div class="section-label">Choose Your Plan</div>
-            <h2>Simple, transparent pricing</h2>
+            <div class="section-label">Pricing</div>
+            <h2>One price. Full arsenal. No hidden fees.</h2>
         </div>
         <div class="pricing-cards">
             <div class="pricing-card blur-fade" style="--delay:2;">
                 <div class="pricing-plan-name">Monthly</div>
-                <div class="pricing-subtitle">Perfect for getting started</div>
+                <div class="pricing-subtitle">Try the edge — no commitment</div>
                 <div class="pricing-price">$19.99<span>/month</span></div>
                 <div class="pricing-desc" style="margin-top:8px;"></div>
                 <ul class="pricing-features">
-                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Unlimited AI Event Analysis</li>
-                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Whale &amp; Smart Money Tracking</li>
-                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>AI Position Sizing (Kelly)</li>
-                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Live Market News Feed</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Unlimited AI Event Scanning</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Whale Radar &amp; Smart Money Alerts</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Kelly-Powered Risk Calculator</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Live News &amp; Sentiment Feed</li>
                     <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Real-time Orderbook Depth</li>
                     <li class="coming-soon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>AI Fundamental Analysis <span class="coming-soon-tag">Coming Soon</span></li>
-                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Multi-Market Scoring</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Opportunity Ranking</li>
                 </ul>
-                <button class="btn-outline">Get Monthly</button>
-                <div class="pricing-cta-sub">Start your analysis today &mdash; cancel anytime</div>
+                <button class="btn-outline">Start Hunting &rarr;</button>
+                <div class="pricing-cta-sub">Cancel anytime &mdash; one winning trade pays for itself</div>
             </div>
             <div class="pricing-card featured animated-border-box blur-fade" style="--delay:3;">
-                <div class="pricing-badge">Recommended</div>
-                <div class="pricing-plan-name" style="margin-top:8px;">Annual</div>
-                <div class="pricing-subtitle">Best value for serious traders</div>
+                <div class="pricing-badge">Most Popular</div>
+                <div class="pricing-plan-name">Annual</div>
+                <div class="pricing-subtitle">For hunters who are serious about winning</div>
                 <div class="pricing-price">$8.33<span>/month</span></div>
                 <div>
                     <span class="pricing-discount-tag">58% off</span>
@@ -2112,20 +2110,20 @@ animateFrames('numbersFrameImg', "{{ url_for('static', filename='images/numbers/
                 <div class="pricing-billed"><span class="pricing-original">$19.99/mo</span> Billed annually at <strong style="color:var(--text-primary);">$99.99</strong></div>
                 <div class="pricing-save">Save $140 per year</div>
                 <ul class="pricing-features">
-                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Unlimited AI Event Analysis</li>
-                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Whale &amp; Smart Money Tracking</li>
-                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>AI Position Sizing (Kelly)</li>
-                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Live Market News Feed</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Unlimited AI Event Scanning</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Whale Radar &amp; Smart Money Alerts</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Kelly-Powered Risk Calculator</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Live News &amp; Sentiment Feed</li>
                     <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Real-time Orderbook Depth</li>
                     <li class="coming-soon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>AI Fundamental Analysis <span class="coming-soon-tag">Coming Soon</span></li>
-                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Multi-Market Scoring</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Opportunity Ranking</li>
                     <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Priority Support</li>
                 </ul>
                 <button class="btn-primary" style="width:100%;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
-                    Get Annual
+                    Lock In 58% Off &rarr;
                 </button>
-                <div class="pricing-cta-sub">Best your annual subscription &mdash; save 58%</div>
+                <div class="pricing-cta-sub">Join 2,000+ hunters &mdash; best value for serious bettors</div>
             </div>
         </div>
     </div>
