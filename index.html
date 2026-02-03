@@ -7,7 +7,7 @@
     <meta name="description" content="The #1 AI-powered Polymarket event analyzer. Get instant AI analysis, whale tracking, and position sizing for any prediction market event.">
     <meta property="og:title" content="PolyHunter — #1 AI Polymarket Events Analyzer">
     <meta property="og:description" content="AI terminal for Polymarket traders. Analyze any event in seconds.">
-    <meta property="og:image" content="https://polyhunter.ai/static/images/566456.png">
+    <meta property="og:image" content="https://polyhunter.com/og-image.png">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -50,14 +50,14 @@
 
         /* ===== Reset ===== */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; overflow-x: clip; }
-        body { overflow-x: clip; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
             color: var(--text-secondary);
             font-size: 16px;
             line-height: 1.6;
+            overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
         /* Particles canvas background */
@@ -160,7 +160,7 @@
                 var(--accent-purple) 70%,
                 transparent 75%, transparent 100%
             );
-            animation: borderRotate 8s linear infinite;
+            animation: borderRotate 3s linear infinite;
         }
         .animated-border-box::after {
             content: '';
@@ -171,7 +171,7 @@
             background: var(--bg-card);
         }
         .animated-border-box:hover::before {
-            animation-duration: 4s;
+            animation-duration: 1.5s;
         }
         .animated-border-box:hover {
             box-shadow: 0 0 20px rgba(59,165,181,0.15);
@@ -484,26 +484,6 @@
             line-height: 1.6;
             max-width: 440px;
         }
-        /* Hero animation / image */
-        .hero-notebook-img {
-            width: 130%;
-            max-width: 780px;
-            height: auto;
-            border-radius: 12px;
-            filter: drop-shadow(0 20px 60px rgba(0, 0, 0, 0.5));
-            margin-right: -15%;
-            object-fit: cover;
-            background: transparent;
-        }
-
-        @media (max-width: 768px) {
-            .hero-notebook-img {
-                width: 100%;
-                max-width: 100%;
-                margin-right: 0;
-            }
-        }
-
         /* Laptop mockup container */
         .hero-mockup {
             position: relative;
@@ -1086,14 +1066,14 @@
             top: 50%;
             transform: translateY(-50%);
             width: 55%;
-            height: auto;
-            opacity: 0.6;
-        }
-        .map-visual img {
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-            border-radius: 8px;
+            height: 80%;
+            opacity: 0.35;
+            background: radial-gradient(circle at 30% 40%, var(--accent-cyan) 0%, transparent 2%),
+                        radial-gradient(circle at 50% 30%, var(--primary) 0%, transparent 2%),
+                        radial-gradient(circle at 70% 45%, var(--accent-cyan) 0%, transparent 2%),
+                        radial-gradient(circle at 25% 55%, var(--primary) 0%, transparent 1.5%),
+                        radial-gradient(circle at 80% 35%, var(--accent-purple) 0%, transparent 1.5%),
+                        radial-gradient(circle at 60% 60%, var(--primary) 0%, transparent 1.5%);
         }
 
         /* ===== Testimonials ===== */
@@ -1489,15 +1469,7 @@
             .hero-mockup { max-width: 560px; margin: 0 auto; }
             .testimonials-grid { grid-template-columns: repeat(2, 1fr); }
             .features-grid { grid-template-columns: repeat(2, 1fr); }
-            .map-visual {
-                position: relative;
-                right: 0;
-                top: 0;
-                transform: none;
-                width: 100%;
-                opacity: 0.5;
-                margin-top: 32px;
-            }
+            .map-visual { display: none; }
             .map-content { max-width: 100%; }
             .map-section { text-align: center; }
             .map-content p { margin-left: auto; margin-right: auto; }
@@ -1548,8 +1520,8 @@
 <!-- ===== NAVIGATION — Fixed Top Bar ===== -->
 <nav class="nav">
     <div class="nav-brand">
-        <a href="/" style="display:flex;align-items:center;text-decoration:none;">
-            <img src="{{ url_for('static', filename='images/566456.png') }}" alt="PolyHunter" class="nav-logo">
+        <a href="#" style="display:flex;align-items:center;text-decoration:none;">
+            <img src="566456.png" alt="PolyHunter" class="nav-logo">
         </a>
     </div>
 
@@ -1570,8 +1542,8 @@
             </span>
             <input type="text" placeholder="Search markets..." id="globalSearch">
         </div>
-        <a href="/login" class="btn-ghost">Log In</a>
-        <a href="/register" class="nav-signup" style="text-decoration:none;">Sign Up</a>
+        <a href="login.html" class="btn-ghost">Log In</a>
+        <button class="nav-signup" onclick="document.getElementById('final-cta').scrollIntoView({behavior:'smooth'})">Sign Up</button>
     </div>
 
     <button class="hamburger" id="hamburger" aria-label="Menu">
@@ -1585,8 +1557,8 @@
     <a href="#how-it-works">Dashboard</a>
     <a href="#tools">Tools</a>
     <a href="#pricing">Pricing</a>
-    <a href="/login">Log In</a>
-    <a href="/register" class="btn-primary" style="text-decoration:none;text-align:center;">Sign Up</a>
+    <a href="login.html">Log In</a>
+    <button class="btn-primary" onclick="document.getElementById('final-cta').scrollIntoView({behavior:'smooth'})">Sign Up</button>
 </div>
 
 <!-- ===== HERO — Split Layout with Laptop Mockup ===== -->
@@ -1599,7 +1571,62 @@
                 <a href="#final-cta" class="btn-primary">Run Analysis</a>
             </div>
             <div class="hero-mockup blur-fade" style="--delay:3;">
-                <img src="{{ url_for('static', filename='images/notebook-hero.png') }}" alt="PolyHunter Dashboard" class="hero-notebook-img">
+                <img src="Gemini_Generated_Image_26c3gq26c3gq26c3 (1).png" alt="PolyHunter Mascot" class="hero-mascot">
+                <div class="laptop">
+                    <div class="laptop-screen">
+                        <div class="mock-dash">
+                            <div class="mock-dash-header">
+                                <div class="mock-dash-dot" style="background:#ef4444;"></div>
+                                <div class="mock-dash-dot" style="background:#f59e0b;"></div>
+                                <div class="mock-dash-dot" style="background:#10b981;"></div>
+                            </div>
+                            <div class="mock-dash-row">
+                                <div class="mock-panel">
+                                    <div class="mock-panel-label">Yes Price</div>
+                                    <div class="mock-panel-value text-green">73.2<span style="font-size:11px;">&cent;</span></div>
+                                    <div class="mock-panel-sub text-green" style="font-size:10px;">+5.4%</div>
+                                </div>
+                                <div class="mock-panel">
+                                    <div class="mock-panel-label">AI Score</div>
+                                    <div class="mock-panel-value text-blue">89</div>
+                                    <div class="mock-panel-sub" style="color:var(--accent-blue);font-size:10px;">Strong Buy</div>
+                                </div>
+                                <div class="mock-panel">
+                                    <div class="mock-panel-label">Volume 24h</div>
+                                    <div class="mock-panel-value" style="color:var(--accent-cyan);">$1.2M</div>
+                                    <div class="mock-panel-sub" style="color:var(--accent-cyan);font-size:10px;">+42%</div>
+                                </div>
+                            </div>
+                            <div class="mock-dash-row" style="flex:2;">
+                                <div class="mock-chart">
+                                    <div class="mock-panel-label">Price History</div>
+                                    <div class="candle-row">
+                                        <div class="candle"><div class="candle-wick" style="height:12px;background:#ef4444;"></div><div class="candle-body" style="height:18px;background:#ef4444;"></div></div>
+                                        <div class="candle"><div class="candle-wick" style="height:8px;background:#ef4444;"></div><div class="candle-body" style="height:14px;background:#ef4444;"></div></div>
+                                        <div class="candle"><div class="candle-wick" style="height:10px;background:#10b981;"></div><div class="candle-body" style="height:20px;background:#10b981;"></div></div>
+                                        <div class="candle"><div class="candle-wick" style="height:6px;background:#10b981;"></div><div class="candle-body" style="height:24px;background:#10b981;"></div></div>
+                                        <div class="candle"><div class="candle-wick" style="height:14px;background:#ef4444;"></div><div class="candle-body" style="height:10px;background:#ef4444;"></div></div>
+                                        <div class="candle"><div class="candle-wick" style="height:8px;background:#10b981;"></div><div class="candle-body" style="height:28px;background:#10b981;"></div></div>
+                                        <div class="candle"><div class="candle-wick" style="height:10px;background:#10b981;"></div><div class="candle-body" style="height:22px;background:#10b981;"></div></div>
+                                        <div class="candle"><div class="candle-wick" style="height:6px;background:#10b981;"></div><div class="candle-body" style="height:32px;background:#10b981;"></div></div>
+                                    </div>
+                                </div>
+                                <div class="mock-panel" style="flex:0.6;">
+                                    <div class="mock-panel-label">AI Analysis</div>
+                                    <div style="margin-top:6px;">
+                                        <div style="font-size:10px;color:var(--success);font-weight:700;margin-bottom:6px;">BUY YES</div>
+                                        <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px;">Entry: 73.2&cent;</div>
+                                        <div style="font-size:9px;color:var(--success);margin-bottom:4px;">Target: 85.0&cent;</div>
+                                        <div style="font-size:9px;color:var(--danger);">Stop: 65.0&cent;</div>
+                                        <div style="margin-top:8px;font-size:8px;color:var(--text-muted);line-height:1.4;">Whale accumulation detected. 3 wallets added $180K in YES positions.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="laptop-base"></div>
+                    <div class="laptop-bottom"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -1646,8 +1673,8 @@
                 <div class="steps-flow">
                     <div class="step-item">
                         <div class="step-num">1</div>
-                        <div class="step-visual step-visual--anim">
-                            <img id="urlFrameImg" src="{{ url_for('static', filename='images/url-frames/frame_000.jpg') }}" alt="Paste URL" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">
+                        <div class="step-visual">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                         </div>
                         <div class="step-label">Paste URL</div>
                         <div class="step-sublabel">Drop any event link</div>
@@ -1655,8 +1682,8 @@
                     </div>
                     <div class="step-item">
                         <div class="step-num">2</div>
-                        <div class="step-visual step-visual--anim">
-                            <img id="pasteFrameImg" src="{{ url_for('static', filename='images/paste-frames/frame_000.jpg') }}" alt="Analyze" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">
+                        <div class="step-visual">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                         </div>
                         <div class="step-label">Analyze</div>
                         <div class="step-sublabel">AI finds patterns</div>
@@ -1665,7 +1692,7 @@
                     <div class="step-item">
                         <div class="step-num">3</div>
                         <div class="step-visual step-visual--anim">
-                            <img id="numbersFrameImg" src="{{ url_for('static', filename='images/numbers/frame_000.jpg') }}" alt="Trade" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">
+                            <img id="numbersFrameImg" src="numbers/ssstwitter.com_1770071604446_000.jpg" alt="Trade" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">
                         </div>
                         <div class="step-label">Trade</div>
                         <div class="step-sublabel">Get exact levels</div>
@@ -1802,96 +1829,9 @@
             <p>Get real-time data and AI-powered analysis across all major prediction market platforms worldwide.</p>
             <a href="#final-cta" class="btn-primary">Start Analyzing</a>
         </div>
-        <div class="map-visual">
-            <img id="mapFrameImg" src="{{ url_for('static', filename='images/map-frames/frame_000.jpg') }}" alt="Global prediction markets">
-        </div>
+        <div class="map-visual"></div>
     </div>
 </section>
-<script>
-(function() {
-    const totalFrames = 50;
-    const basePath = "{{ url_for('static', filename='images/map-frames/') }}";
-    const img = document.getElementById('mapFrameImg');
-    if (!img) return;
-
-    // Preload all frames
-    const frames = [];
-    for (let i = 0; i < totalFrames; i++) {
-        const f = new Image();
-        f.src = basePath + 'frame_' + String(i).padStart(3, '0') + '.jpg';
-        frames.push(f);
-    }
-
-    let current = 0;
-    setInterval(function() {
-        current = (current + 1) % totalFrames;
-        img.src = frames[current].src;
-    }, 80); // ~12.5 fps
-})();
-
-// Analyze step frame animation
-(function() {
-    const totalFrames = 20;
-    const basePath = "{{ url_for('static', filename='images/paste-frames/') }}";
-    const img = document.getElementById('pasteFrameImg');
-    if (!img) return;
-
-    const frames = [];
-    for (let i = 0; i < totalFrames; i++) {
-        const f = new Image();
-        f.src = basePath + 'frame_' + String(i).padStart(3, '0') + '.jpg';
-        frames.push(f);
-    }
-
-    let current = 0;
-    setInterval(function() {
-        current = (current + 1) % totalFrames;
-        img.src = frames[current].src;
-    }, 100); // ~10 fps
-})();
-
-// Paste URL step frame animation
-(function() {
-    const totalFrames = 30;
-    const basePath = "{{ url_for('static', filename='images/url-frames/') }}";
-    const img = document.getElementById('urlFrameImg');
-    if (!img) return;
-
-    const frames = [];
-    for (let i = 0; i < totalFrames; i++) {
-        const f = new Image();
-        f.src = basePath + 'frame_' + String(i).padStart(3, '0') + '.jpg';
-        frames.push(f);
-    }
-
-    let current = 0;
-    setInterval(function() {
-        current = (current + 1) % totalFrames;
-        img.src = frames[current].src;
-    }, 100); // ~10 fps
-})();
-
-// Trade step (numbers) frame animation
-(function() {
-    const totalFrames = 82;
-    const basePath = "{{ url_for('static', filename='images/numbers/') }}";
-    const img = document.getElementById('numbersFrameImg');
-    if (!img) return;
-
-    const frames = [];
-    for (let i = 0; i < totalFrames; i++) {
-        const f = new Image();
-        f.src = basePath + 'frame_' + String(i).padStart(3, '0') + '.jpg';
-        frames.push(f);
-    }
-
-    let current = 0;
-    setInterval(function() {
-        current = (current + 1) % totalFrames;
-        img.src = frames[current].src;
-    }, 80); // ~12.5 fps
-})();
-</script>
 
 <!-- ===== TESTIMONIALS — 4 Column ===== -->
 <section class="testimonials-section">
@@ -2083,7 +2023,7 @@
 <section class="final-cta-section" id="final-cta">
     <div class="container" style="position:relative;z-index:1;">
         <div class="final-cta-mesh"></div>
-        <img src="{{ url_for('static', filename='images/mascot.png') }}" alt="PolyHunter Mascot" class="final-mascot blur-fade" style="--delay:0;">
+        <img src="Gemini_Generated_Image_26c3gq26c3gq26c3 (1).png" alt="PolyHunter Mascot" class="final-mascot blur-fade" style="--delay:0;">
         <div class="final-cta-laptop blur-fade" style="--delay:1;">
             <div class="laptop" style="margin:0 auto;">
                 <div class="laptop-screen">
@@ -2126,7 +2066,7 @@
         </div>
         <h2 class="blur-fade" style="--delay:2;">Trade like the next generation.</h2>
         <p class="blur-fade" style="--delay:3;">Your edge in any prediction market.</p>
-        <a href="/register" class="btn-primary blur-fade" style="--delay:4;font-size:17px;padding:16px 40px;position:relative;z-index:1;text-decoration:none;">Get Started Free</a>
+        <a href="register.html" class="btn-primary blur-fade" style="--delay:4;font-size:17px;padding:16px 40px;position:relative;z-index:1;">Get Started Free</a>
     </div>
 </section>
 
@@ -2136,7 +2076,7 @@
         <div class="footer-grid">
             <div class="footer-brand-col">
                 <div style="display:flex;align-items:center;">
-                    <img src="{{ url_for('static', filename='images/566456.png') }}" alt="PolyHunter" style="width:180px;height:44px;object-fit:contain;mix-blend-mode:screen;">
+                    <img src="566456.png" alt="PolyHunter" style="width:180px;height:44px;object-fit:contain;mix-blend-mode:screen;">
                 </div>
                 <p>AI terminal for Polymarket traders. Your edge in every prediction market.</p>
                 <div class="footer-social">
@@ -2154,8 +2094,8 @@
             </div>
             <div class="footer-col">
                 <div class="footer-col-title">Get Started</div>
-                <a href="/register">Get Started</a>
-                <a href="/login">Login</a>
+                <a href="register.html">Get Started</a>
+                <a href="login.html">Login</a>
                 <a href="#pricing">Pricing</a>
                 <a href="#">Blog</a>
                 <a href="#">Contact Support</a>
@@ -2352,6 +2292,27 @@ class ParticlesBackground {
 
 // Initialize particles
 new ParticlesBackground('particles-canvas');
+
+// Trade step (numbers) frame animation
+(function() {
+    const totalFrames = 82;
+    const basePath = 'numbers/ssstwitter.com_1770071604446_';
+    const img = document.getElementById('numbersFrameImg');
+    if (!img) return;
+
+    const frames = [];
+    for (let i = 0; i < totalFrames; i++) {
+        const f = new Image();
+        f.src = basePath + String(i).padStart(3, '0') + '.jpg';
+        frames.push(f);
+    }
+
+    let current = 0;
+    setInterval(function() {
+        current = (current + 1) % totalFrames;
+        img.src = frames[current].src;
+    }, 80);
+})();
 </script>
 
 </body>
