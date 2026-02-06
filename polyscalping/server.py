@@ -41,8 +41,17 @@ except ImportError:
     YFINANCE_AVAILABLE = False
 
 app = Flask(__name__)
-app.config['TEMPLATES_AUTO_RELOAD'] = True
-CORS(app)
+
+# Production vs development config
+IS_PRODUCTION = os.getenv("ENVIRONMENT", "development") == "production"
+app.config['TEMPLATES_AUTO_RELOAD'] = not IS_PRODUCTION
+
+# CORS — restrict origins in production
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "")
+if _allowed_origins:
+    CORS(app, origins=[o.strip() for o in _allowed_origins.split(",") if o.strip()])
+else:
+    CORS(app)
 
 # Supabase config — injected into all templates
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
@@ -1456,6 +1465,14 @@ def terms_page():
 @app.route("/privacy")
 def privacy_page():
     return render_template("privacy.html")
+
+@app.route("/refund-policy")
+def refund_policy_page():
+    return render_template("refund-policy.html")
+
+@app.route("/acceptable-use")
+def acceptable_use_page():
+    return render_template("acceptable-use.html")
 
 # ============================================================================
 # ROUTES - API

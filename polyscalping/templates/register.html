@@ -399,7 +399,7 @@
                 <div class="form-checkbox-group">
                     <div class="form-checkbox-row">
                         <input type="checkbox" id="termsCheckbox" required>
-                        <label for="termsCheckbox">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+                        <label for="termsCheckbox">I agree to the <a href="/terms" target="_blank">Terms of Service</a>, <a href="/privacy" target="_blank">Privacy Policy</a>, <a href="/refund-policy" target="_blank">Refund Policy</a>, and <a href="/acceptable-use" target="_blank">Acceptable Use Policy</a>, including recurring billing terms</label>
                     </div>
                     <div class="form-checkbox-row">
                         <input type="checkbox" id="marketingCheckbox">
@@ -428,11 +428,11 @@
 console.log('[PolyHunter] SUPABASE_URL =', '{{ SUPABASE_URL }}');
 console.log('[PolyHunter] SUPABASE_ANON_KEY =', '{{ SUPABASE_ANON_KEY }}'.substring(0, 20) + '...');
 
-let supabase;
+var _supaClient;
 try {
     if (!window.supabase) throw new Error('Supabase JS SDK not loaded — CDN blocked?');
     if (!'{{ SUPABASE_URL }}'.startsWith('https://')) throw new Error('SUPABASE_URL is empty or invalid: "{{ SUPABASE_URL }}"');
-    supabase = window.supabase.createClient(
+    _supaClient = window.supabase.createClient(
         '{{ SUPABASE_URL }}',
         '{{ SUPABASE_ANON_KEY }}'
     );
@@ -459,7 +459,7 @@ try {
 
 // Redirect if already logged in
 (async function() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await _supaClient.auth.getUser();
     if (user) window.location.href = '/dashboard';
 })();
 
@@ -470,7 +470,7 @@ async function handleSendCode() {
     const username = document.getElementById('usernameInput').value;
     const btn = document.getElementById('sendCodeBtn');
 
-    if (!supabase) {
+    if (!_supaClient) {
         showMessage('Supabase not initialized. Check browser console for details.', 'error');
         return;
     }
@@ -493,7 +493,7 @@ async function handleSendCode() {
     console.log('[DEBUG] Calling supabase.auth.signUp for:', email);
 
     try {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await _supaClient.auth.signUp({
             email: email,
             password: password,
             options: {
@@ -543,7 +543,7 @@ async function handleCreateAccount() {
     const code = document.getElementById('codeInput').value;
     const terms = document.getElementById('termsCheckbox').checked;
 
-    if (!supabase) {
+    if (!_supaClient) {
         showMessage('Supabase not initialized. Check browser console for details.', 'error');
         return;
     }
@@ -565,7 +565,7 @@ async function handleCreateAccount() {
     btn.disabled = true;
     btn.textContent = 'Creating account...';
 
-    const { data, error } = await supabase.auth.verifyOtp({
+    const { data, error } = await _supaClient.auth.verifyOtp({
         email: email,
         token: code,
         type: 'signup'
@@ -580,7 +580,7 @@ async function handleCreateAccount() {
 
     if (data.user) {
         // Sign out so user logs in fresh
-        await supabase.auth.signOut();
+        await _supaClient.auth.signOut();
         showMessage('Account created! Redirecting to login...', 'success');
         setTimeout(() => {
             window.location.href = '/login';

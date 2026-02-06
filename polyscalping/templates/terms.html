@@ -81,6 +81,20 @@
             font-size: 12px;
             color: var(--text-muted);
         }
+        .legal-links {
+            margin-top: 30px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .legal-links p {
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .legal-links a {
+            margin-right: 16px;
+        }
         @media (max-width: 480px) {
             .legal-header h1 { font-size: 24px; }
             h2 { font-size: 18px; }
@@ -96,33 +110,53 @@
 
     <div class="legal-header">
         <h1>Terms of Service</h1>
-        <div class="last-updated">Last updated: February 3, 2026</div>
+        <div class="last-updated">Last updated: February 6, 2026</div>
     </div>
 
     <h2>1. Acceptance of Terms</h2>
-    <p>By accessing or using PolyHunter ("Service"), operated by PolyHunter ("Company", "we", "us"), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Service.</p>
+    <p>By accessing or using PolyHunter ("Service"), operated by PolyHunter ("Company", "we", "us"), you agree to be bound by these Terms of Service, our <a href="/privacy">Privacy Policy</a>, our <a href="/refund-policy">Refund &amp; Cancellation Policy</a>, and our <a href="/acceptable-use">Acceptable Use Policy</a> (collectively, the "Agreement"). If you do not agree to any part of this Agreement, do not use the Service.</p>
 
     <h2>2. Description of Service</h2>
-    <p>PolyHunter is an AI-powered analysis platform for prediction markets. The Service provides event scanning, whale tracking, AI-generated verdicts, position sizing tools, orderbook analysis, and related features via a web-based subscription platform.</p>
+    <p>PolyHunter is an AI-powered analysis platform for prediction markets. The Service provides event scanning, whale tracking, AI-generated verdicts, position sizing tools, orderbook analysis, and related features via a web-based subscription platform accessible at <a href="https://poly-hunter.com">poly-hunter.com</a>.</p>
 
     <h2>3. Eligibility</h2>
-    <p>You must be at least 18 years old and legally permitted to use prediction market platforms in your jurisdiction. By using the Service, you represent and warrant that you meet these requirements.</p>
+    <p>You must be at least 18 years old and legally permitted to use prediction market platforms in your jurisdiction. By using the Service, you represent and warrant that you meet these requirements. The Service is not available in jurisdictions where prediction market analysis tools are prohibited.</p>
 
     <h2>4. Account Registration</h2>
-    <p>To access the Service, you must create an account with accurate and complete information. You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account. Notify us immediately of any unauthorized use.</p>
+    <p>To access the Service, you must create an account with accurate and complete information. You are responsible for:</p>
+    <ul>
+        <li>Maintaining the confidentiality of your login credentials</li>
+        <li>All activity that occurs under your account</li>
+        <li>Notifying us immediately of any unauthorized use of your account</li>
+        <li>Ensuring your registration information remains current and accurate</li>
+    </ul>
+    <p>We reserve the right to suspend or terminate accounts with inaccurate or fraudulent information.</p>
 
     <h2>5. Subscription and Payments</h2>
-    <h3>5.1 Plans</h3>
-    <p>The Service is offered under Monthly and Annual subscription plans. Features and pricing are described on our pricing page and may be updated from time to time.</p>
-    <h3>5.2 Billing</h3>
-    <p>Subscriptions are billed in advance on a recurring basis (monthly or annually). All payments are processed securely through Stripe. By subscribing, you authorize us to charge your payment method on each billing cycle.</p>
-    <h3>5.3 Cancellation</h3>
-    <p>You may cancel your subscription at any time from your account dashboard. Upon cancellation, you retain access until the end of your current billing period. No refunds are issued for partial billing periods.</p>
-    <h3>5.4 Refund Policy</h3>
-    <p>All subscription fees are non-refundable except where required by applicable law. If you believe you are entitled to a refund, contact us at support@polyhunter.ai.</p>
+
+    <h3>5.1 Plans and Pricing</h3>
+    <p>The Service is offered under Monthly and Annual subscription plans. Features and pricing are described on our pricing page and may be updated from time to time. Any price changes will be communicated to existing subscribers at least 30 days in advance.</p>
+
+    <h3>5.2 Recurring Billing</h3>
+    <p><strong>By subscribing, you expressly authorize PolyHunter to charge your selected payment method on a recurring basis</strong> (monthly or annually, depending on your chosen plan) until you cancel. All payments are processed securely through our third-party payment processor. We do not store your full payment card details on our servers.</p>
+
+    <h3>5.3 Free Trial</h3>
+    <p>If a free trial is offered, you will not be charged during the trial period. At the end of the trial, your subscription will automatically convert to a paid plan unless you cancel before the trial ends. You will be clearly notified before any charge occurs.</p>
+
+    <h3>5.4 Cancellation</h3>
+    <p>You may cancel your subscription at any time from your account settings or by contacting us at <a href="mailto:contact@poly-hunter.com">contact@poly-hunter.com</a>. Upon cancellation:</p>
+    <ul>
+        <li>You retain access to the Service until the end of your current billing period</li>
+        <li>No further charges will be made after cancellation takes effect</li>
+        <li>Your account will revert to a free/limited state after the paid period ends</li>
+    </ul>
+    <p>For full details, see our <a href="/refund-policy">Refund &amp; Cancellation Policy</a>.</p>
+
+    <h3>5.5 Refunds</h3>
+    <p>We offer a 7-day refund window from the date of your initial subscription purchase. Refund requests made within 7 days of the first payment will be processed in full. After 7 days, subscription fees are non-refundable except where required by applicable law. Renewal charges are non-refundable. For full details, see our <a href="/refund-policy">Refund &amp; Cancellation Policy</a>.</p>
 
     <h2>6. Acceptable Use</h2>
-    <p>You agree not to:</p>
+    <p>You agree to use the Service in compliance with our <a href="/acceptable-use">Acceptable Use Policy</a>. In summary, you agree not to:</p>
     <ul>
         <li>Use the Service for any unlawful purpose or in violation of any applicable laws</li>
         <li>Attempt to reverse-engineer, decompile, or extract source code from the Service</li>
@@ -130,10 +164,12 @@
         <li>Use automated scripts, bots, or scrapers to access the Service without written permission</li>
         <li>Interfere with or disrupt the integrity or performance of the Service</li>
         <li>Circumvent any access restrictions, rate limits, or security measures</li>
+        <li>Use the Service to provide competing analysis services to third parties</li>
     </ul>
 
     <h2>7. Intellectual Property</h2>
     <p>All content, features, functionality, software, designs, text, and graphics on the Service are owned by or licensed to PolyHunter and are protected by intellectual property laws. You may not copy, modify, distribute, or create derivative works without our express written consent.</p>
+    <p>You retain ownership of any data you submit to the Service (such as event URLs for analysis). We do not claim ownership of your inputs.</p>
 
     <h2>8. AI-Generated Content Disclaimer</h2>
     <p>The Service provides AI-generated analysis, verdicts, confidence scores, and position recommendations. This content is generated by automated systems and is provided for <strong>informational and educational purposes only</strong>. It does not constitute:</p>
@@ -142,33 +178,64 @@
         <li>A recommendation to buy, sell, or hold any position</li>
         <li>A guarantee of accuracy, completeness, or future performance</li>
     </ul>
-    <p>You acknowledge that prediction market trading involves substantial risk of loss. Always conduct your own research and consult a licensed financial adviser before making trading decisions.</p>
+    <p><strong>You acknowledge that prediction market trading involves substantial risk of loss, including the possible loss of your entire investment.</strong> Always conduct your own research and consult a licensed financial adviser before making trading decisions. PolyHunter is not a registered investment adviser, broker-dealer, or financial planner.</p>
 
     <h2>9. No Guarantee of Results</h2>
-    <p>We do not guarantee any specific financial outcome from using the Service. Past performance of AI models, analysis accuracy, or any displayed metrics are not indicative of future results. You use the Service at your own risk.</p>
+    <p>We do not guarantee any specific financial outcome from using the Service. Past performance of AI models, analysis accuracy, or any displayed metrics are not indicative of future results. You use the Service entirely at your own risk and discretion.</p>
 
     <h2>10. Limitation of Liability</h2>
     <p>To the maximum extent permitted by law, PolyHunter and its officers, directors, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, or goodwill, arising from your use of or inability to use the Service.</p>
-    <p>Our total aggregate liability shall not exceed the amount you have paid to us in the twelve (12) months preceding the event giving rise to the claim.</p>
+    <p>In no event shall our total aggregate liability exceed the amount you have paid to us in the twelve (12) months preceding the event giving rise to the claim.</p>
+    <p>This limitation applies to all causes of action, whether based on warranty, contract, tort (including negligence), or any other legal theory.</p>
 
     <h2>11. Indemnification</h2>
-    <p>You agree to indemnify and hold harmless PolyHunter from any claims, damages, losses, or expenses (including reasonable legal fees) arising from your use of the Service, violation of these Terms, or infringement of any third-party rights.</p>
+    <p>You agree to indemnify, defend, and hold harmless PolyHunter and its officers, directors, employees, agents, and affiliates from any claims, damages, losses, liabilities, or expenses (including reasonable legal fees) arising from:</p>
+    <ul>
+        <li>Your use of or conduct in connection with the Service</li>
+        <li>Your violation of these Terms or any applicable law</li>
+        <li>Your infringement of any third-party rights</li>
+        <li>Any trading decisions you make based on information provided by the Service</li>
+    </ul>
 
     <h2>12. Service Availability</h2>
-    <p>We strive to maintain high availability but do not guarantee uninterrupted access. The Service may be temporarily unavailable due to maintenance, updates, or circumstances beyond our control. We are not liable for any downtime or service interruptions.</p>
+    <p>We strive to maintain high availability but do not guarantee uninterrupted or error-free access. The Service may be temporarily unavailable due to maintenance, updates, or circumstances beyond our control. We are not liable for any downtime, service interruptions, or data loss resulting from such events.</p>
 
     <h2>13. Modifications to Terms</h2>
-    <p>We reserve the right to modify these Terms at any time. Material changes will be communicated via email or an in-app notification. Your continued use of the Service after changes take effect constitutes acceptance of the revised Terms.</p>
+    <p>We reserve the right to modify these Terms at any time. Material changes will be communicated via email or an in-app notification at least 14 days before taking effect. Your continued use of the Service after changes take effect constitutes acceptance of the revised Terms. If you do not agree with the changes, you must discontinue use and cancel your subscription.</p>
 
     <h2>14. Termination</h2>
-    <p>We may suspend or terminate your access to the Service at our sole discretion, without notice, for conduct that we determine violates these Terms or is harmful to other users, us, or third parties. Upon termination, your right to use the Service ceases immediately.</p>
+    <p>We may suspend or terminate your access to the Service at our sole discretion, with or without notice, for conduct that we determine violates these Terms, our Acceptable Use Policy, or is harmful to other users, us, or third parties.</p>
+    <p>Upon termination:</p>
+    <ul>
+        <li>Your right to use the Service ceases immediately</li>
+        <li>No refund will be issued for the remaining billing period unless required by law</li>
+        <li>We may delete your account data after 30 days following termination</li>
+    </ul>
+    <p>You may terminate your account at any time by cancelling your subscription and contacting us at <a href="mailto:contact@poly-hunter.com">contact@poly-hunter.com</a>.</p>
 
-    <h2>15. Governing Law</h2>
-    <p>These Terms shall be governed by and construed in accordance with the laws of the United States, without regard to conflict of law provisions. Any disputes shall be resolved in the courts of competent jurisdiction.</p>
+    <h2>15. Dispute Resolution</h2>
+    <p>Any dispute arising from these Terms or your use of the Service shall first be attempted to be resolved through good-faith negotiation. If a resolution cannot be reached within 30 days, either party may pursue resolution through binding arbitration or the courts of competent jurisdiction.</p>
 
-    <h2>16. Contact</h2>
+    <h2>16. Governing Law</h2>
+    <p>These Terms shall be governed by and construed in accordance with the laws of the State of Delaware, United States, without regard to conflict of law provisions.</p>
+
+    <h2>17. Severability</h2>
+    <p>If any provision of these Terms is found to be unenforceable or invalid, that provision shall be limited or eliminated to the minimum extent necessary, and the remaining provisions shall remain in full force and effect.</p>
+
+    <h2>18. Entire Agreement</h2>
+    <p>These Terms, together with the Privacy Policy, Refund &amp; Cancellation Policy, and Acceptable Use Policy, constitute the entire agreement between you and PolyHunter regarding the use of the Service and supersede any prior agreements.</p>
+
+    <h2>19. Contact</h2>
     <p>If you have questions about these Terms, contact us at:</p>
-    <p><strong>Email:</strong> support@polyhunter.ai</p>
+    <p><strong>Email:</strong> <a href="mailto:contact@poly-hunter.com">contact@poly-hunter.com</a></p>
+    <p><strong>Website:</strong> <a href="https://poly-hunter.com">poly-hunter.com</a></p>
+
+    <div class="legal-links">
+        <p><strong>Related Policies:</strong></p>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/refund-policy">Refund &amp; Cancellation Policy</a>
+        <a href="/acceptable-use">Acceptable Use Policy</a>
+    </div>
 
     <div class="legal-footer">
         &copy; 2026 PolyHunter. All rights reserved.

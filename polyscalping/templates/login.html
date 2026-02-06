@@ -385,15 +385,17 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const supabase = window.supabase.createClient(
+var _supaClient = window.supabase.createClient(
     '{{ SUPABASE_URL }}',
     '{{ SUPABASE_ANON_KEY }}'
 );
 
 // Redirect if already logged in
 (async function() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) window.location.href = '/dashboard';
+    try {
+        const { data: { user } } = await _supaClient.auth.getUser();
+        if (user) window.location.href = '/dashboard';
+    } catch(e) { console.warn('Auth check failed:', e); }
 })();
 
 async function handleSignIn() {
@@ -409,23 +411,29 @@ async function handleSignIn() {
     btn.disabled = true;
     btn.textContent = 'Signing in...';
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
+    try {
+        const { data, error } = await _supaClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
 
-    if (error) {
-        showMessage(error.message, 'error');
+        if (error) {
+            showMessage(error.message, 'error');
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+            return;
+        }
+
+        if (data.user) {
+            showMessage('Signed in! Redirecting...', 'success');
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 800);
+        }
+    } catch(e) {
+        showMessage('Connection error. Please try again.', 'error');
         btn.disabled = false;
         btn.textContent = 'Sign In';
-        return;
-    }
-
-    if (data.user) {
-        showMessage('Signed in! Redirecting...', 'success');
-        setTimeout(() => {
-            window.location.href = '/dashboard';
-        }, 800);
     }
 }
 

@@ -1136,13 +1136,13 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // Supabase auth gating — runs on every app page
-        const supabase = window.supabase.createClient(
+        var _supaClient = window.supabase.createClient(
             '{{ SUPABASE_URL }}',
             '{{ SUPABASE_ANON_KEY }}'
         );
 
         (async function authGate() {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await _supaClient.auth.getUser();
 
             if (!user) {
                 window.location.href = '/login';
@@ -1154,7 +1154,7 @@
             const navUsername = document.getElementById('navUsername');
             if (navUser && navUsername) {
                 // Try to get username from profile, fallback to email
-                const { data: profile } = await supabase
+                const { data: profile } = await _supaClient
                     .from('profiles')
                     .select('username, is_subscribed, subscription_status')
                     .eq('id', user.id)
@@ -1171,7 +1171,7 @@
         })();
 
         async function handleLogout() {
-            await supabase.auth.signOut();
+            await _supaClient.auth.signOut();
             window.location.href = '/login';
         }
 
