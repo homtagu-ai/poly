@@ -431,8 +431,8 @@
 
 {% block content %}
 <div class="page-header blur-fade" style="--delay: 0;">
-    <h1 class="page-title">Whale Tracker</h1>
-    <p class="page-subtitle">Track Polymarket traders and monitor their latest trades</p>
+    <h1 class="page-title">On-Chain Wallet Tracker</h1>
+    <p class="page-subtitle">Track Polymarket wallets and monitor their latest activity</p>
 </div>
 
 <div class="whale-layout">
@@ -448,7 +448,7 @@
                 </div>
                 <div class="tracker-input-group">
                     <label>Label (optional)</label>
-                    <input type="text" class="input" id="walletLabel" placeholder="e.g., Big Trader, Whale #1">
+                    <input type="text" class="input" id="walletLabel" placeholder="e.g., Large Wallet, Wallet #1">
                 </div>
                 <button class="btn btn-gradient-animated" onclick="addTrackedWallet()" style="width: 100%;">
                     ✨ Track Wallet
@@ -468,7 +468,7 @@
 
         <!-- Top Whales -->
         <div class="tracker-card blur-fade" style="--delay: 3;">
-            <div class="tracker-title"><span class="dot" style="background: var(--accent-yellow);"></span>Top Whales (24h)</div>
+            <div class="tracker-title"><span class="dot" style="background: var(--accent-yellow);"></span>Top Wallets (24h)</div>
             <div id="topWhalesList">
                 <div class="loading"><div class="spinner"></div></div>
             </div>
@@ -482,7 +482,7 @@
             <div class="whale-stat-card">
                 <div class="whale-stat-icon">&#128051;</div>
                 <div class="stat-value text-purple number-ticker" id="statWhaleCount">-</div>
-                <div class="stat-label">Active Whales</div>
+                <div class="stat-label">Active Large Wallets</div>
             </div>
             <div class="whale-stat-card">
                 <div class="whale-stat-icon">&#128184;</div>
@@ -739,7 +739,7 @@
         const container = document.getElementById('topWhalesList');
 
         if (whales.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No whales detected</div>';
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No large wallets detected</div>';
             return;
         }
 
@@ -760,7 +760,7 @@
         if (!trackedWallets.find(w => w.address.toLowerCase() === address.toLowerCase())) {
             trackedWallets.push({
                 address: address,
-                label: `Whale ${trackedWallets.length + 1}`,
+                label: `Wallet ${trackedWallets.length + 1}`,
                 addedAt: Date.now()
             });
             localStorage.setItem('trackedWallets', JSON.stringify(trackedWallets));

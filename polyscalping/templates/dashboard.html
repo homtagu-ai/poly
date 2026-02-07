@@ -412,8 +412,8 @@
 
 {% block content %}
 <div class="page-header blur-fade" style="--delay: 0;">
-    <h1 class="page-title">Stop Guessing. <span class="text-cyan">Start Hunting.</span></h1>
-    <p class="page-subtitle">PolyHunter is the #1 AI platform for Polymarket predictions. We find the edge so you can take the profit.</p>
+    <h1 class="page-title">Explore Markets. <span class="text-cyan">Start Learning.</span></h1>
+    <p class="page-subtitle">PolyHunter is an AI-powered educational research platform for prediction markets. Explore data, study events, and deepen your understanding.</p>
 </div>
 
 <!-- Stats Grid - polyscalping.org style -->
@@ -468,12 +468,12 @@
             <a href="/calculator" class="quick-tool blur-fade" style="--delay: 6;">
                 <div class="quick-tool-icon">&#128178;</div>
                 <div class="quick-tool-title">ROI Calculator</div>
-                <div class="quick-tool-desc">Calculate profit and ROI for trades</div>
+                <div class="quick-tool-desc">Calculate profit and ROI scenarios</div>
             </a>
             <a href="/analyzer" class="quick-tool blur-fade" style="--delay: 7;">
                 <div class="quick-tool-icon">&#128202;</div>
                 <div class="quick-tool-title">Event Analyzer</div>
-                <div class="quick-tool-desc">Deep dive with Kelly sizing & EV</div>
+                <div class="quick-tool-desc">Deep analysis with probability modeling</div>
             </a>
             <a href="/markets?sort_by=volume" class="quick-tool blur-fade" style="--delay: 8;">
                 <div class="quick-tool-icon">&#128200;</div>
@@ -482,7 +482,7 @@
             </a>
             <a href="/whales" class="quick-tool blur-fade" style="--delay: 9;">
                 <div class="quick-tool-icon">&#128051;</div>
-                <div class="quick-tool-title">Whale Tracker</div>
+                <div class="quick-tool-title">On-Chain Tracker</div>
                 <div class="quick-tool-desc">Monitor large wallet activity</div>
             </a>
         </div>
@@ -493,7 +493,7 @@
         <!-- Whale Activity -->
         <div class="card blur-fade" style="--delay: 6;">
             <div class="section-header">
-                <span class="section-title">&#128051; Top Whales</span>
+                <span class="section-title">&#128051; Top Wallets</span>
                 <a href="/whales" class="section-action">View All &rarr;</a>
             </div>
             <div id="whalesList">
@@ -655,7 +655,7 @@
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">&#128051;</div>
-                    <p>No whale activity detected</p>
+                    <p>No large wallet activity detected</p>
                 </div>
             `;
             return;
