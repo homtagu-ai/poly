@@ -745,7 +745,7 @@
 {% block content %}
 <div class="page-header blur-fade" style="--delay: 0;">
     <h1 class="page-title">Event Analyzer</h1>
-    <p class="page-subtitle">Comprehensive analysis with probability modeling, on-chain data, and AI insights</p>
+    <p class="page-subtitle">Comprehensive analysis with Kelly sizing, whale tracking, and AI insights</p>
 </div>
 
 <div class="analyzer-layout">
@@ -804,11 +804,11 @@ const PIPELINE_STEPS = [
     "Fetching stock/asset data...",
     "Running probability models...",
     "Fetching sports odds (if applicable)...",
-    "Searching Kalshi for cross-platform data...",
-    "Analyzing on-chain wallet activity...",
+    "Searching Kalshi for cross-platform opportunities...",
+    "Tracking whale wallets on Polygon...",
     "Fetching CLOB orderbook depth...",
-    "Calculating Kelly Criterion & allocation model...",
-    "Generating AI research report...",
+    "Calculating Kelly sizing & strategy...",
+    "Generating AI analysis report...",
     "Finalizing results..."
 ];
 
@@ -1043,7 +1043,7 @@ function renderFullResults(data) {
                 <div class="action-icon buy">💰</div>
                 <div class="action-text">
                     <div class="action-main" style="font-size:1.1rem">Buy ${bestSide}${targetName ? ' on <span style="color:var(--accent-cyan);font-weight:700">' + targetName + '</span>' : ''} at ${(entryPrice * 100).toFixed(1)}¢</div>
-                    <div class="action-detail">${posPct.toFixed(1)}% of $${budget.toLocaleString()} portfolio · R:R ${riskReward.toFixed(1)}x · ${roiIfWin.toFixed(0)}% ROI if correct</div>
+                    <div class="action-detail">${posPct.toFixed(1)}% of $${budget.toLocaleString()} bankroll · R:R ${riskReward.toFixed(1)}x · ${roiIfWin.toFixed(0)}% ROI if correct</div>
                 </div>
                 <div class="action-amount">
                     <div class="action-value" style="color:var(--accent-green)">$${posSize.toFixed(0)}</div>
@@ -1087,7 +1087,7 @@ function renderFullResults(data) {
         <div class="result-tabs">
             <button class="result-tab active" onclick="switchTab('charts')">Charts</button>
             <button class="result-tab" onclick="switchTab('markets')">Markets</button>
-            <button class="result-tab" onclick="switchTab('whales')">On-Chain</button>
+            <button class="result-tab" onclick="switchTab('whales')">Whales</button>
             <button class="result-tab" onclick="switchTab('orderbook')">Orderbook</button>
             <button class="result-tab" onclick="switchTab('ai')">AI Report</button>
         </div>
@@ -1127,12 +1127,12 @@ function renderFullResults(data) {
         <!-- Whales Tab -->
         <div class="tab-content" id="tab-whales">
             <div class="card">
-                <div class="card-title"><span class="dot" style="background:var(--accent-purple)"></span>On-Chain Wallet Activity</div>
+                <div class="card-title"><span class="dot" style="background:var(--accent-purple)"></span>Whale Activity</div>
                 <div class="whale-flow">
                     <div class="whale-flow-icon">${flowDirection.includes('INFLOW') ? '📈' : '📉'}</div>
                     <div class="whale-flow-text">
                         <div class="whale-flow-direction" style="color:${flowColor}">${flowDirection}</div>
-                        <div class="whale-flow-stats">${whaleSummary.whale_count || 0} large wallets · Net: ${formatUSD(netFlow)}</div>
+                        <div class="whale-flow-stats">${whaleSummary.whale_count || 0} whales · Net: ${formatUSD(netFlow)}</div>
                     </div>
                 </div>
                 <div style="overflow-x:auto">

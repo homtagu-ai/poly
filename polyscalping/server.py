@@ -147,11 +147,11 @@ PIPELINE_STEPS = [
     "Fetching stock/asset data...",
     "Running probability models...",
     "Fetching sports odds (if applicable)...",
-    "Searching Kalshi for cross-platform data...",
-    "Analyzing on-chain wallet activity...",
+    "Searching Kalshi for cross-platform opportunities...",
+    "Tracking whale wallets on Polygon...",
     "Fetching CLOB orderbook depth...",
-    "Calculating Kelly Criterion & allocation model...",
-    "Generating AI research report...",
+    "Calculating Kelly sizing & strategy...",
+    "Generating AI analysis report...",
     "Finalizing results..."
 ]
 
@@ -822,49 +822,47 @@ def generate_claude_report(full_data):
         strat = full_data.get("strategy", {})
         strat_line = ""
         if strat.get("best_market"):
-            strat_line = f"\nSTRATEGY ENGINE ANALYSIS:\n- Best Market: {strat['best_market']}\n- Side: {strat.get('best_side', 'YES')}\n- Suggested Allocation: ${strat.get('recommended_position', 0):,.0f} ({strat.get('position_pct', 0):.1f}% of portfolio)\n- Confidence: {strat.get('confidence', 'low')}\n- Potential Return: ${strat.get('potential_profit', 0):,.0f}\n- Risk/Reward: {strat.get('risk_reward', 0):.1f}x\n"
+            strat_line = f"\nSTRATEGY ENGINE RECOMMENDATION:\n- Best Market: {strat['best_market']}\n- Side: {strat.get('best_side', 'YES')}\n- Position Size: ${strat.get('recommended_position', 0):,.0f} ({strat.get('position_pct', 0):.1f}% of bankroll)\n- Confidence: {strat.get('confidence', 'low')}\n- Potential Profit: ${strat.get('potential_profit', 0):,.0f}\n- Risk/Reward: {strat.get('risk_reward', 0):.1f}x\n"
 
         multi_choice_note = ""
         if is_multi_choice:
             multi_choice_note = f"""
 NOTE: This is a MULTI-CHOICE event with {num_markets} markets/outcomes.
-You MUST specify the EXACT outcome/company/person to analyze by name.
-Example: "Alphabet YES at 83¢" NOT just "YES".
-Each market is a separate outcome — be specific about WHICH one."""
+You MUST specify the EXACT outcome/company/person to bet on by name.
+Example: "Buy YES on Alphabet at 83¢" NOT just "Buy YES".
+Each market is a separate bet — be specific about WHICH one."""
 
-        prompt = f"""You are PolySnap Bot, an AI-powered prediction market research analyst. You provide educational analysis and probability assessments for prediction market events.
+        prompt = f"""You are PolySnap Bot, an AGGRESSIVE prediction market analyst. You ALWAYS recommend a position to enter. NEVER say "PASS" or "wait". Every market has an opportunity.
 
-Generate a concise educational research report for this event.
+Generate a concise but ACTIONABLE analysis report for this event.
 
 EVENT: {event_title}
-RESEARCH BUDGET: ${budget:,.0f}
+BUDGET: ${budget:,.0f}
 NUMBER OF MARKETS: {num_markets}
 {multi_choice_note}
 
 MARKETS:
 {market_summary}
 {strat_line}
-ON-CHAIN ACTIVITY:
+WHALE ACTIVITY:
 {json.dumps(full_data.get('whale_tracking', {}).get('summary', {}), indent=2)}
 
-Write a brief research report with:
-1. **Executive Summary** - 2-3 sentences on the event and the most notable analytical insight.
-2. **Primary Analysis** - The MAIN finding. Focus on the MOST LIKELY outcome based on data. Name the SPECIFIC market (e.g. "Alphabet YES at 84¢"). Calculate the theoretical ROI. Show what an optimal Kelly Criterion allocation would look like (15-25% of portfolio for high-probability scenarios).
-3. **Position Model** - SPECIFIC hypothetical allocation, side, and market name. Format: "Analysis suggests [YES/NO] on [SPECIFIC MARKET NAME] — $X (Y% of portfolio) → Z% theoretical ROI if correct". Use the strategy engine's model (${strat.get('recommended_position', 0):,.0f} at {strat.get('position_pct', 0):.1f}%) as baseline.
-4. **Key Risks** - Top 2 risks to consider in your research.
+Write a brief report with:
+1. **Executive Summary** - 2-3 sentences on the event and the best realistic trade.
+2. **Primary Trade** - The MAIN recommendation. Focus on the MOST LIKELY outcome. Name the SPECIFIC market (e.g. "Alphabet YES at 84¢"). Calculate the realistic ROI. Recommend a large position size (15-25% of bankroll for high-probability bets).
+3. **Position Details** - SPECIFIC dollar amount, side, and market name. Format: "Buy [YES/NO] on [SPECIFIC MARKET NAME] — $X (Y% of bankroll) → Z% ROI if correct". Use the strategy engine's position (${strat.get('recommended_position', 0):,.0f} at {strat.get('position_pct', 0):.1f}%) as baseline.
+4. **Key Risks** - Top 2 risks, but frame them as manageable.
 
-ANALYSIS GUIDELINES:
-- ALWAYS provide a clear analytical conclusion. Avoid ambiguous or inconclusive assessments.
+CRITICAL RULES:
+- ALWAYS recommend entering a trade. NEVER say "PASS" or "wait".
 - ALWAYS name the SPECIFIC market/outcome — never just say "YES" or "NO" generically.
-- PRIORITIZE high-probability outcomes with REALISTIC theoretical ROI (5-30% returns on larger allocations).
-  Example: "Alphabet YES at 84¢ → 19% ROI, $500 allocation" is MORE INSIGHTFUL than "Tesla YES at 0.4¢ → 28000% ROI, $30 allocation".
-- Focus on data-backed probability assessments rather than speculation.
-- Allocation SIZE matters for educational modeling — a $500 allocation with 19% ROI ($95) demonstrates better risk management than a $30 allocation with 300% ROI ($90).
-- For multi-choice events: lead with the highest-probability outcome, then optionally analyze a secondary scenario.
+- PRIORITIZE high-probability outcomes with REALISTIC ROI (5-30% returns on big positions).
+  Example: "Buy Alphabet YES at 84¢ → 19% ROI, $500 position" is BETTER than "Buy Tesla YES at 0.4¢ → 28000% ROI, $30 position".
+- The user wants to ACTUALLY COLLECT profits, not gamble on longshots.
+- Bet SIZE matters — a $500 bet with 19% ROI ($95 profit) beats a $30 bet with 300% ROI ($90 profit) because it's far more likely to pay out.
+- For multi-choice events: lead with the favorite/most-likely outcome, then optionally mention a smaller speculative side bet.
 
-DISCLAIMER: This analysis is for educational and informational purposes only. It does not constitute financial advice.
-
-Keep it under 500 words. Be specific with numbers and allocation models."""
+Keep it under 500 words. Be specific with numbers and position sizes."""
 
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
