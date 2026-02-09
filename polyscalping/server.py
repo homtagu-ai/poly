@@ -26,6 +26,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
+# Stripe payments
+import stripe
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+STRIPE_PRICE_MONTHLY = os.getenv('STRIPE_PRICE_ID_MONTHLY')
+STRIPE_PRICE_ANNUAL = os.getenv('STRIPE_PRICE_ID_ANNUAL')
+
+# Server-side Supabase client (admin — uses service role key)
+from supabase import create_client as _supabase_create
+_supa_url = os.getenv('SUPABASE_URL', '')
+_supa_service_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
+supabase_admin = _supabase_create(_supa_url, _supa_service_key) if _supa_url and _supa_service_key else None
+
 # Try to import anthropic for Claude reports
 try:
     import anthropic
@@ -1713,6 +1726,163 @@ def api_stats():
 
     set_cached("dashboard_stats", stats)
     return jsonify(stats)
+
+# ============================================================================
+# STRIPE PAYMENT ROUTES
+# ============================================================================
+
+@app.route('/api/stripe/create-checkout', methods=['POST'])
+def create_checkout():
+    """Create a Stripe Checkout Session for subscription."""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        email = data.get('email')
+        plan = data.get('plan', 'annual')
+
+        if not user_id or not email:
+            return jsonify({'error': 'Missing user_id or email'}), 400
+
+        # Map plan to price ID
+        price_id = STRIPE_PRICE_ANNUAL if plan == 'annual' else STRIPE_PRICE_MONTHLY
+        if not price_id:
+            return jsonify({'error': 'Stripe price not configured'}), 500
+
+        # Determine URLs based on environment
+        base_url = request.host_url.rstrip('/')
+        if IS_PRODUCTION:
+            base_url = 'https://www.poly-hunter.com'
+
+        session = stripe.checkout.Session.create(
+            customer_email=email,
+            payment_method_types=['card'],
+            line_items=[{
+                'price': price_id,
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=f'{base_url}/dashboard?checkout=success&session_id={{CHECKOUT_SESSION_ID}}',
+            cancel_url=f'{base_url}/dashboard?checkout=canceled',
+            metadata={
+                'supabase_user_id': user_id,
+                'plan': plan
+            },
+            subscription_data={
+                'metadata': {
+                    'supabase_user_id': user_id,
+                    'plan': plan
+                }
+            }
+        )
+        return jsonify({'checkout_url': session.url})
+
+    except stripe.error.StripeError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/stripe/webhook', methods=['POST'])
+def stripe_webhook():
+    """Handle Stripe webhook events for subscription lifecycle."""
+    payload = request.data
+    sig_header = request.headers.get('Stripe-Signature')
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except (ValueError, stripe.error.SignatureVerificationError):
+        return 'Invalid signature', 400
+
+    if not supabase_admin:
+        print('[STRIPE WEBHOOK] ERROR: supabase_admin not configured')
+        return jsonify({'error': 'Server misconfigured'}), 500
+
+    event_type = event['type']
+    print(f'[STRIPE WEBHOOK] {event_type}')
+
+    # --- CHECKOUT COMPLETED ---
+    if event_type == 'checkout.session.completed':
+        session = event['data']['object']
+        supabase_user_id = session.get('metadata', {}).get('supabase_user_id')
+        stripe_customer_id = session.get('customer')
+        stripe_subscription_id = session.get('subscription')
+        plan = session.get('metadata', {}).get('plan', 'pro')
+
+        if supabase_user_id:
+            # Create/update subscription record
+            supabase_admin.table('subscriptions').upsert({
+                'user_id': supabase_user_id,
+                'stripe_customer_id': stripe_customer_id,
+                'stripe_subscription_id': stripe_subscription_id,
+                'status': 'active',
+                'plan': plan,
+            }).execute()
+
+            # Update profile — removes paywall
+            supabase_admin.table('profiles').update({
+                'is_subscribed': True,
+                'subscription_status': 'active',
+                'stripe_customer_id': stripe_customer_id
+            }).eq('id', supabase_user_id).execute()
+
+            print(f'[STRIPE WEBHOOK] User {supabase_user_id} subscribed ({plan})')
+
+    # --- SUBSCRIPTION UPDATED ---
+    elif event_type == 'customer.subscription.updated':
+        subscription = event['data']['object']
+        stripe_sub_id = subscription['id']
+        status = subscription['status']
+
+        supabase_admin.table('subscriptions').update({
+            'status': status,
+            'current_period_end': subscription.get('current_period_end')
+        }).eq('stripe_subscription_id', stripe_sub_id).execute()
+
+        is_active = status in ('active', 'trialing')
+        result = supabase_admin.table('subscriptions') \
+            .select('user_id').eq('stripe_subscription_id', stripe_sub_id).execute()
+        if result.data:
+            supabase_admin.table('profiles').update({
+                'is_subscribed': is_active,
+                'subscription_status': status
+            }).eq('id', result.data[0]['user_id']).execute()
+
+        print(f'[STRIPE WEBHOOK] Subscription {stripe_sub_id} → {status}')
+
+    # --- SUBSCRIPTION DELETED (canceled) ---
+    elif event_type == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        stripe_sub_id = subscription['id']
+
+        supabase_admin.table('subscriptions').update({
+            'status': 'canceled'
+        }).eq('stripe_subscription_id', stripe_sub_id).execute()
+
+        result = supabase_admin.table('subscriptions') \
+            .select('user_id').eq('stripe_subscription_id', stripe_sub_id).execute()
+        if result.data:
+            supabase_admin.table('profiles').update({
+                'is_subscribed': False,
+                'subscription_status': 'canceled'
+            }).eq('id', result.data[0]['user_id']).execute()
+
+        print(f'[STRIPE WEBHOOK] Subscription {stripe_sub_id} canceled')
+
+    # --- PAYMENT FAILED ---
+    elif event_type == 'invoice.payment_failed':
+        invoice = event['data']['object']
+        stripe_sub_id = invoice.get('subscription')
+        if stripe_sub_id:
+            supabase_admin.table('subscriptions').update({
+                'status': 'past_due'
+            }).eq('stripe_subscription_id', stripe_sub_id).execute()
+
+            print(f'[STRIPE WEBHOOK] Payment failed for {stripe_sub_id}')
+
+    return jsonify({'received': True}), 200
+
 
 # ============================================================================
 # MAIN

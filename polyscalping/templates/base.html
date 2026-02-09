@@ -1649,10 +1649,43 @@
             if (modal) modal.remove();
         }
 
-        function proceedToCheckout() {
-            // Placeholder — will create Stripe Checkout session here
-            closePlanModal();
-            alert('Stripe Checkout will open here for plan: ' + selectedPlan + '. Integration coming next!');
+        async function proceedToCheckout() {
+            const btn = document.querySelector('.plan-checkout-btn');
+            btn.textContent = 'Redirecting to checkout...';
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+
+            try {
+                const { data: { user } } = await _supaClient.auth.getUser();
+                if (!user) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const response = await fetch('/api/stripe/create-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        email: user.email,
+                        plan: selectedPlan
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.checkout_url) {
+                    window.location.href = result.checkout_url;
+                } else {
+                    throw new Error(result.error || 'Failed to create checkout session');
+                }
+            } catch (err) {
+                console.error('Checkout error:', err);
+                btn.textContent = 'Continue to Payment';
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                alert('Something went wrong: ' + err.message + '\nPlease try again.');
+            }
         }
     </script>
     {% block extra_scripts %}{% endblock %}
