@@ -33,11 +33,45 @@ STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 STRIPE_PRICE_MONTHLY = os.getenv('STRIPE_PRICE_ID_MONTHLY')
 STRIPE_PRICE_ANNUAL = os.getenv('STRIPE_PRICE_ID_ANNUAL')
 
-# Server-side Supabase client (admin — uses service role key)
-from supabase import create_client as _supabase_create
+# Server-side Supabase REST helper (no SDK needed — works on Python 3.6+)
 _supa_url = os.getenv('SUPABASE_URL', '')
 _supa_service_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
-supabase_admin = _supabase_create(_supa_url, _supa_service_key) if _supa_url and _supa_service_key else None
+
+def _supabase_rest(table, method='GET', data=None, match=None, select=None):
+    """Direct Supabase REST API call using requests (no SDK dependency)."""
+    if not _supa_url or not _supa_service_key:
+        print('[SUPABASE REST] ERROR: URL or service key not configured')
+        return None
+    url = f'{_supa_url}/rest/v1/{table}'
+    headers = {
+        'apikey': _supa_service_key,
+        'Authorization': f'Bearer {_supa_service_key}',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    }
+    params = {}
+    if match:
+        for k, v in match.items():
+            params[k] = f'eq.{v}'
+    if select:
+        params['select'] = select
+    try:
+        if method == 'POST':
+            headers['Prefer'] = 'resolution=merge-duplicates,return=representation'
+            resp = requests.post(url, json=data, headers=headers, params=params, timeout=10)
+        elif method == 'PATCH':
+            resp = requests.patch(url, json=data, headers=headers, params=params, timeout=10)
+        elif method == 'GET':
+            resp = requests.get(url, headers=headers, params=params, timeout=10)
+        else:
+            return None
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        print(f'[SUPABASE REST] Error: {e}')
+        return None
+
+supabase_admin = True if _supa_url and _supa_service_key else None
 
 # Try to import anthropic for Claude reports
 try:
@@ -1812,20 +1846,20 @@ def stripe_webhook():
 
         if supabase_user_id:
             # Create/update subscription record
-            supabase_admin.table('subscriptions').upsert({
+            _supabase_rest('subscriptions', 'POST', data={
                 'user_id': supabase_user_id,
                 'stripe_customer_id': stripe_customer_id,
                 'stripe_subscription_id': stripe_subscription_id,
                 'status': 'active',
                 'plan': plan,
-            }).execute()
+            })
 
             # Update profile — removes paywall
-            supabase_admin.table('profiles').update({
+            _supabase_rest('profiles', 'PATCH', data={
                 'is_subscribed': True,
                 'subscription_status': 'active',
                 'stripe_customer_id': stripe_customer_id
-            }).eq('id', supabase_user_id).execute()
+            }, match={'id': supabase_user_id})
 
             print(f'[STRIPE WEBHOOK] User {supabase_user_id} subscribed ({plan})')
 
@@ -1835,19 +1869,19 @@ def stripe_webhook():
         stripe_sub_id = subscription['id']
         status = subscription['status']
 
-        supabase_admin.table('subscriptions').update({
+        _supabase_rest('subscriptions', 'PATCH', data={
             'status': status,
             'current_period_end': subscription.get('current_period_end')
-        }).eq('stripe_subscription_id', stripe_sub_id).execute()
+        }, match={'stripe_subscription_id': stripe_sub_id})
 
         is_active = status in ('active', 'trialing')
-        result = supabase_admin.table('subscriptions') \
-            .select('user_id').eq('stripe_subscription_id', stripe_sub_id).execute()
-        if result.data:
-            supabase_admin.table('profiles').update({
+        result = _supabase_rest('subscriptions', 'GET',
+            match={'stripe_subscription_id': stripe_sub_id}, select='user_id')
+        if result and len(result) > 0:
+            _supabase_rest('profiles', 'PATCH', data={
                 'is_subscribed': is_active,
                 'subscription_status': status
-            }).eq('id', result.data[0]['user_id']).execute()
+            }, match={'id': result[0]['user_id']})
 
         print(f'[STRIPE WEBHOOK] Subscription {stripe_sub_id} → {status}')
 
@@ -1856,17 +1890,17 @@ def stripe_webhook():
         subscription = event['data']['object']
         stripe_sub_id = subscription['id']
 
-        supabase_admin.table('subscriptions').update({
+        _supabase_rest('subscriptions', 'PATCH', data={
             'status': 'canceled'
-        }).eq('stripe_subscription_id', stripe_sub_id).execute()
+        }, match={'stripe_subscription_id': stripe_sub_id})
 
-        result = supabase_admin.table('subscriptions') \
-            .select('user_id').eq('stripe_subscription_id', stripe_sub_id).execute()
-        if result.data:
-            supabase_admin.table('profiles').update({
+        result = _supabase_rest('subscriptions', 'GET',
+            match={'stripe_subscription_id': stripe_sub_id}, select='user_id')
+        if result and len(result) > 0:
+            _supabase_rest('profiles', 'PATCH', data={
                 'is_subscribed': False,
                 'subscription_status': 'canceled'
-            }).eq('id', result.data[0]['user_id']).execute()
+            }, match={'id': result[0]['user_id']})
 
         print(f'[STRIPE WEBHOOK] Subscription {stripe_sub_id} canceled')
 
@@ -1875,9 +1909,9 @@ def stripe_webhook():
         invoice = event['data']['object']
         stripe_sub_id = invoice.get('subscription')
         if stripe_sub_id:
-            supabase_admin.table('subscriptions').update({
+            _supabase_rest('subscriptions', 'PATCH', data={
                 'status': 'past_due'
-            }).eq('stripe_subscription_id', stripe_sub_id).execute()
+            }, match={'stripe_subscription_id': stripe_sub_id})
 
             print(f'[STRIPE WEBHOOK] Payment failed for {stripe_sub_id}')
 
