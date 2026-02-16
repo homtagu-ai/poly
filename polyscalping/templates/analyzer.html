@@ -1000,19 +1000,19 @@ function renderFullResults(data) {
 
     if (confidence === 'high' && winProb >= 0.65) {
         rec = 'STRONG BUY'; cls = ''; icon = '🔥';
-        txt = `High-conviction · ${(winProb * 100).toFixed(0)}% win probability`;
+        txt = `High-conviction`;
         sub = `$${posSize.toFixed(0)} position · ${roiIfWin.toFixed(0)}% ROI · ~$${expectedProfit.toFixed(0)} expected profit`;
     } else if ((confidence === 'medium' || confidence === 'high') && winProb >= 0.40) {
         rec = 'BUY'; cls = ''; icon = '🚀';
-        txt = `Good opportunity · ${(winProb * 100).toFixed(0)}% win probability`;
+        txt = `Good opportunity`;
         sub = `$${posSize.toFixed(0)} position · ${roiIfWin.toFixed(0)}% ROI · ~$${expectedProfit.toFixed(0)} expected profit`;
     } else if (winProb >= 0.10) {
         rec = 'BUY'; cls = ''; icon = '💰';
-        txt = `Moderate play · ${(winProb * 100).toFixed(0)}% win probability`;
+        txt = `Moderate play`;
         sub = `$${posSize.toFixed(0)} position · ${roiIfWin.toFixed(0)}% ROI if correct`;
     } else {
         rec = 'SPECULATE'; cls = ''; icon = '🎯';
-        txt = `Longshot · ${(winProb * 100).toFixed(1)}% chance`;
+        txt = `Longshot`;
         sub = `$${posSize.toFixed(0)} position · ${roiIfWin.toFixed(0)}% ROI if correct`;
     }
 
