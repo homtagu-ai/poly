@@ -1180,13 +1180,53 @@
             position: absolute;
             top: -1px;
             right: 16px;
-            background: linear-gradient(135deg, #0dd3ce, #3edbd5);
-            color: #000;
+            background: linear-gradient(135deg, #ff6b35, #ff4444);
+            color: #fff;
             font-size: 9px;
             font-weight: 800;
             letter-spacing: 0.8px;
             padding: 3px 10px;
             border-radius: 0 0 8px 8px;
+        }
+
+        /* Flash sale urgency elements */
+        .plan-countdown {
+            background: linear-gradient(90deg, #ff6b35, #ff4444, #ff6b35);
+            background-size: 200% 100%;
+            animation: flashPulse 2s ease-in-out infinite;
+            color: white;
+            text-align: center;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+        .plan-countdown.expired {
+            background: #444;
+            animation: none;
+        }
+        .plan-countdown .deal-timer {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+        .plan-original-price {
+            font-size: 12px;
+            color: #ff6b6b;
+            text-decoration: line-through;
+            opacity: 0.8;
+            margin-bottom: 1px;
+        }
+        .plan-social-proof {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        @keyframes flashPulse {
+            0%, 100% { background-position: 0% center; opacity: 1; }
+            50% { background-position: 100% center; opacity: 0.88; }
         }
 
         /* Checkout button */
@@ -1239,6 +1279,32 @@
         }
     </style>
     {% block extra_styles %}{% endblock %}
+
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '958556573177099');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=958556573177099&ev=PageView&noscript=1"/></noscript>
+    <!-- End Meta Pixel Code -->
+
+    <!-- X conversion tracking base code -->
+    <script>
+    !function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
+    },s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='https://static.ads-twitter.com/uwt.js',
+    a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
+    twq('config','r5r0h');
+    </script>
+    <!-- End X conversion tracking base code -->
 </head>
 <body>
     <!-- Particles Background -->
@@ -1596,6 +1662,9 @@
             modal.innerHTML = `
                 <div class="plan-modal">
                     <button class="plan-modal-close" onclick="closePlanModal()">&times;</button>
+                    <div class="plan-countdown" id="plan-countdown">
+                        Extra 10% OFF ends in <span class="deal-timer" id="deal-timer">15:00</span>
+                    </div>
                     <h2>Choose Your Plan</h2>
                     <p class="plan-modal-sub">Full access to every PolyHunter tool. Cancel anytime.</p>
                     <div class="plan-cards">
@@ -1606,17 +1675,19 @@
                                 <div class="plan-desc">Billed monthly &bull; Cancel anytime</div>
                             </div>
                             <div class="plan-card-price">
+                                <div class="plan-original-price">$21.99/mo</div>
                                 <div class="price-main">$19<span>.99/mo</span></div>
                             </div>
                         </div>
                         <div class="plan-card selected" onclick="selectPlan('annual', this)">
-                            <div class="plan-card-badge">SAVE 58%</div>
+                            <div class="plan-card-badge">FLASH SALE</div>
                             <div class="plan-card-radio"></div>
                             <div class="plan-card-info">
                                 <div class="plan-name">Annual</div>
-                                <div class="plan-desc">Billed $99.99/year</div>
+                                <div class="plan-desc">Billed $99.99/year <span class="plan-original-price" style="display:inline">$109.99</span></div>
                             </div>
                             <div class="plan-card-price">
+                                <div class="plan-original-price">$9.17/mo</div>
                                 <div class="price-main">$8<span>.33/mo</span></div>
                                 <div class="price-note">Best value</div>
                             </div>
@@ -1631,6 +1702,30 @@
                 </div>
             `;
             document.body.appendChild(modal);
+
+            // 15-minute countdown timer (persists in sessionStorage)
+            const TIMER_KEY = 'ph_flash_deadline';
+            let _deadline = parseInt(sessionStorage.getItem(TIMER_KEY));
+            if (!_deadline || isNaN(_deadline)) {
+                _deadline = Date.now() + 15 * 60 * 1000;
+                sessionStorage.setItem(TIMER_KEY, String(_deadline));
+            }
+            const timerEl = document.getElementById('deal-timer');
+            const countdownEl = document.getElementById('plan-countdown');
+            function updateTimer() {
+                const remaining = _deadline - Date.now();
+                if (remaining <= 0) {
+                    timerEl.textContent = '0:00';
+                    countdownEl.classList.add('expired');
+                    countdownEl.innerHTML = '&#9889; Offer expired &mdash; prices increase soon';
+                    return;
+                }
+                const m = Math.floor(remaining / 60000);
+                const s = Math.floor((remaining % 60000) / 1000);
+                timerEl.textContent = m + ':' + String(s).padStart(2, '0');
+            }
+            updateTimer();
+            const _timerInterval = setInterval(updateTimer, 1000);
 
             // Close on backdrop click
             modal.addEventListener('click', function(e) {
@@ -1675,6 +1770,22 @@
                 const result = await response.json();
 
                 if (result.checkout_url) {
+                    // Fire Meta Pixel InitiateCheckout event
+                    if (typeof fbq === 'function') {
+                        fbq('track', 'InitiateCheckout', {
+                            content_name: selectedPlan === 'annual' ? 'PolyHunter Annual' : 'PolyHunter Monthly',
+                            currency: 'USD',
+                            value: selectedPlan === 'annual' ? 99.99 : 19.99
+                        });
+                    }
+                    // Fire X/Twitter InitiateCheckout event
+                    if (typeof twq === 'function') {
+                        twq('event', 'tw-r5r0h-r5r0i', {
+                            value: selectedPlan === 'annual' ? 99.99 : 19.99,
+                            currency: 'USD',
+                            content_name: selectedPlan === 'annual' ? 'PolyHunter Annual' : 'PolyHunter Monthly'
+                        });
+                    }
                     window.location.href = result.checkout_url;
                 } else {
                     throw new Error(result.error || 'Failed to create checkout session');

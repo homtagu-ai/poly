@@ -33,6 +33,59 @@ STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 STRIPE_PRICE_MONTHLY = os.getenv('STRIPE_PRICE_ID_MONTHLY')
 STRIPE_PRICE_ANNUAL = os.getenv('STRIPE_PRICE_ID_ANNUAL')
 
+# Meta Conversions API (server-side events via Stape CAPIG)
+META_PIXEL_ID = os.getenv('META_PIXEL_ID', '958556573177099')
+META_CAPI_ACCESS_TOKEN = os.getenv('META_CAPI_ACCESS_TOKEN', '')
+META_TEST_EVENT_CODE = os.getenv('META_TEST_EVENT_CODE', '')  # e.g. TEST7566
+
+# Stape CAPIG (Conversions API Gateway) — proxies events to Meta CAPI
+STAPE_CAPIG_URL = os.getenv('STAPE_CAPIG_URL', '')          # e.g. https://capig.stape.be
+STAPE_CAPIG_IDENTIFIER = os.getenv('STAPE_CAPIG_IDENTIFIER', '')  # e.g. tmibmhmp
+
+def meta_capi_event(event_name, user_data=None, custom_data=None, event_source_url=None):
+    """Send a server-side event to Meta Conversions API via Stape CAPIG.
+    Falls back to direct Graph API if Stape is not configured."""
+    if not META_CAPI_ACCESS_TOKEN:
+        print(f'[META CAPI] Skipped {event_name} — no access token configured')
+        return
+    try:
+        import time as _time
+        payload = {
+            'data': [{
+                'event_name': event_name,
+                'event_time': int(_time.time()),
+                'event_id': str(uuid.uuid4()),
+                'action_source': 'website',
+                'event_source_url': event_source_url or 'https://www.poly-hunter.com',
+                'user_data': user_data or {},
+                'custom_data': custom_data or {}
+            }]
+        }
+        # Include test event code if configured
+        if META_TEST_EVENT_CODE:
+            payload['test_event_code'] = META_TEST_EVENT_CODE
+
+        # Route through Stape CAPIG if configured, otherwise direct to Graph API
+        if STAPE_CAPIG_URL and STAPE_CAPIG_IDENTIFIER:
+            api_url = f'{STAPE_CAPIG_URL}/{STAPE_CAPIG_IDENTIFIER}/v21.0/{META_PIXEL_ID}/events'
+            resp = requests.post(
+                api_url,
+                params={'access_token': META_CAPI_ACCESS_TOKEN},
+                json=payload,
+                timeout=5
+            )
+            print(f'[META CAPI via Stape] {event_name} → {resp.status_code}: {resp.text[:200]}')
+        else:
+            resp = requests.post(
+                f'https://graph.facebook.com/v21.0/{META_PIXEL_ID}/events',
+                params={'access_token': META_CAPI_ACCESS_TOKEN},
+                json=payload,
+                timeout=5
+            )
+            print(f'[META CAPI direct] {event_name} → {resp.status_code}: {resp.text[:200]}')
+    except Exception as e:
+        print(f'[META CAPI] Error sending {event_name}: {e}')
+
 # Server-side Supabase REST helper (no SDK needed — works on Python 3.6+)
 _supa_url = os.getenv('SUPABASE_URL', '')
 _supa_service_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
@@ -1469,6 +1522,10 @@ def fetch_event_analysis(slug):
 def landing():
     return render_template("landing.html")
 
+@app.route("/article")
+def article_page():
+    return render_template("article.html")
+
 @app.route("/register")
 def register_page():
     return render_template("register.html")
@@ -1862,6 +1919,23 @@ def stripe_webhook():
             }, match={'id': supabase_user_id})
 
             print(f'[STRIPE WEBHOOK] User {supabase_user_id} subscribed ({plan})')
+
+            # Fire Purchase event to Meta Conversions API (server-side)
+            customer_email = session.get('customer_email', '')
+            purchase_value = 99.99 if plan == 'annual' else 19.99
+            user_data_meta = {}
+            if customer_email:
+                user_data_meta['em'] = [hashlib.sha256(customer_email.lower().strip().encode()).hexdigest()]
+            meta_capi_event('Purchase',
+                user_data=user_data_meta,
+                custom_data={
+                    'currency': 'USD',
+                    'value': purchase_value,
+                    'content_name': f'PolyHunter {plan.capitalize()} Plan',
+                    'content_type': 'product'
+                },
+                event_source_url='https://www.poly-hunter.com/dashboard'
+            )
 
     # --- SUBSCRIPTION UPDATED ---
     elif event_type == 'customer.subscription.updated':
