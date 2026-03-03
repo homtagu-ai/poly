@@ -274,6 +274,16 @@
             color: #6ee7b7;
             display: block;
         }
+        .form-message-hint {
+            display: block;
+            margin-top: 8px;
+            font-size: 13px;
+            opacity: 0.95;
+        }
+        .form-message-hint a {
+            color: var(--accent, #22d3ee);
+            text-decoration: underline;
+        }
 
         /* ===== Responsive ===== */
 
@@ -331,11 +341,11 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '918915764058613');
+    fbq('init', '1419170066573613');
     fbq('track', 'PageView');
     </script>
     <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=918915764058613&ev=PageView&noscript=1"/></noscript>
+    src="https://www.facebook.com/tr?id=1419170066573613&ev=PageView&noscript=1"/></noscript>
     <!-- End Meta Pixel Code -->
 
     <!-- X conversion tracking base code -->
@@ -420,7 +430,7 @@ var _supaClient = window.supabase.createClient(
 (async function() {
     try {
         const { data: { user } } = await _supaClient.auth.getUser();
-        if (user) window.location.href = '/dashboard';
+        if (user) window.location.href = '/analyzer';
     } catch(e) { console.warn('Auth check failed:', e); }
 })();
 
@@ -444,7 +454,13 @@ async function handleSignIn() {
         });
 
         if (error) {
-            showMessage(error.message, 'error');
+            var msg = error.message;
+            if (error.message === 'Invalid login credentials') {
+                msg = 'Invalid login credentials.';
+                showMessageWithHint(msg, 'Try <a href="/forgot-password">Forgot password?</a> to reset. If you just signed up, confirm your email with the 6-digit code first.');
+            } else {
+                showMessage(msg, 'error');
+            }
             btn.disabled = false;
             btn.textContent = 'Sign In';
             return;
@@ -453,7 +469,7 @@ async function handleSignIn() {
         if (data.user) {
             showMessage('Signed in! Redirecting...', 'success');
             setTimeout(() => {
-                window.location.href = '/dashboard';
+                window.location.href = '/analyzer';
             }, 800);
         }
     } catch(e) {
@@ -465,8 +481,15 @@ async function handleSignIn() {
 
 function showMessage(text, type) {
     const el = document.getElementById('formMessage');
+    el.innerHTML = '';
     el.textContent = text;
     el.className = 'form-message ' + type;
+}
+
+function showMessageWithHint(text, hintHtml) {
+    const el = document.getElementById('formMessage');
+    el.innerHTML = text + ' <span class="form-message-hint">' + hintHtml + '</span>';
+    el.className = 'form-message error';
 }
 
 // Allow Enter key to submit

@@ -95,7 +95,7 @@
         height: 100%;
         background: linear-gradient(90deg, #3ba5b5, #0dd3ce);
         border-radius: 8px;
-        transition: width 0.3s ease;
+        transition: width 0.4s ease-out;
     }
     .progress-steps {
         display: flex;
@@ -354,6 +354,118 @@
         border-radius: 4px;
         font-family: 'JetBrains Mono', monospace;
         font-size: 12px;
+    }
+
+    /* ============================================
+       PREMIUM LOCK — partial reveal for free users
+       ============================================ */
+    .premium-locked {
+        position: relative;
+        overflow: hidden;
+    }
+    .premium-locked .locked-content {
+        filter: blur(8px);
+        user-select: none;
+        pointer-events: none;
+    }
+    .premium-locked .lock-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        background: rgba(11, 21, 32, 0.55);
+        backdrop-filter: blur(2px);
+        border-radius: var(--radius);
+    }
+    .lock-overlay-icon {
+        font-size: 36px;
+        margin-bottom: 10px;
+    }
+    .lock-overlay-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+    .lock-overlay-sub {
+        font-size: 13px;
+        color: var(--text-secondary);
+        text-align: center;
+        max-width: 280px;
+        margin-bottom: 14px;
+        line-height: 1.5;
+    }
+    .lock-overlay-btn {
+        padding: 10px 24px;
+        background: linear-gradient(135deg, #f97316, #ef4444);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .lock-overlay-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 20px rgba(249, 115, 22, 0.4);
+    }
+
+    /* Free credits banner */
+    .credits-banner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, rgba(249,115,22,0.12) 0%, rgba(239,68,68,0.08) 100%);
+        border: 1px solid rgba(249,115,22,0.25);
+        border-radius: 10px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+    .credits-banner-icon {
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    .credits-banner strong {
+        color: #f97316;
+    }
+    .credits-banner .credits-count {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        color: #f97316;
+    }
+
+    /* Blurred metric values */
+    .metric-blurred .metric-val {
+        filter: blur(8px);
+        user-select: none;
+    }
+
+    /* Blurred event meta (volume, liquidity, days) */
+    .event-meta-blurred {
+        filter: blur(8px);
+        user-select: none;
+        pointer-events: none;
+    }
+
+    /* Blurred action row */
+    .action-row-blurred {
+        filter: blur(8px);
+        user-select: none;
+        pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+        .lock-overlay-icon { font-size: 28px; }
+        .lock-overlay-title { font-size: 14px; }
+        .lock-overlay-sub { font-size: 11px; max-width: 220px; }
+        .lock-overlay-btn { padding: 8px 18px; font-size: 12px; }
+        .credits-banner { font-size: 11px; padding: 8px 10px; gap: 8px; }
     }
 
     /* Quick Events */
@@ -799,6 +911,73 @@ let pollRetries = 0;
 let pollInterval = null;
 let chartInstances = {};
 
+// ===== FREE CREDIT SYSTEM =====
+const FREE_CREDITS_TOTAL = 1;
+const CREDITS_KEY = 'ph_free_credits_used';
+
+function getCreditsUsed() {
+    return parseInt(localStorage.getItem(CREDITS_KEY) || '0');
+}
+function useCredit() {
+    const used = getCreditsUsed() + 1;
+    localStorage.setItem(CREDITS_KEY, String(used));
+    return used;
+}
+function getCreditsRemaining() {
+    return Math.max(0, FREE_CREDITS_TOTAL - getCreditsUsed());
+}
+function isUserSubscribed() {
+    return window.__userSubscribed === true;
+}
+function shouldShowFullResults() {
+    // Subscribed users always see full results
+    if (isUserSubscribed()) return true;
+    // Free users see full results only if they have credits
+    return getCreditsRemaining() > 0;
+}
+
+// Show credits banner in sidebar for free users
+function renderCreditsBanner() {
+    const existing = document.getElementById('credits-banner');
+    if (existing) existing.remove();
+    if (isUserSubscribed()) return;
+
+    const remaining = getCreditsRemaining();
+    const banner = document.createElement('div');
+    banner.id = 'credits-banner';
+    banner.className = 'credits-banner';
+
+    if (remaining > 0) {
+        banner.innerHTML = `
+            <div class="credits-banner-icon">&#9889;</div>
+            <div>You have <span class="credits-count">${remaining}</span> free analysis remaining.
+            Full details included!</div>
+        `;
+    } else {
+        banner.innerHTML = `
+            <div class="credits-banner-icon">&#128274;</div>
+            <div>Free analysis used. Results are <strong>partially locked</strong>.
+            <a href="#" onclick="startCheckout();return false" style="color:#f97316;font-weight:600">Upgrade</a> to unlock everything.</div>
+        `;
+    }
+
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) sidebar.prepend(banner);
+}
+
+// Helper: wraps content in a locked overlay
+function lockWrap(innerHtml, message) {
+    return `<div class="premium-locked">
+        <div class="lock-overlay">
+            <div class="lock-overlay-icon">&#128274;</div>
+            <div class="lock-overlay-title">Premium Only</div>
+            <div class="lock-overlay-sub">${message}</div>
+            <button class="lock-overlay-btn" onclick="startCheckout()">Unlock — $8.33/mo</button>
+        </div>
+        <div class="locked-content">${innerHtml}</div>
+    </div>`;
+}
+
 const PIPELINE_STEPS = [
     "Fetching Polymarket event data...",
     "Fetching stock/asset data...",
@@ -838,6 +1017,12 @@ async function analyze() {
     }
 
     if (!slug) return alert('Enter an event URL');
+
+    // Consume a free credit for non-subscribers
+    if (!isUserSubscribed() && getCreditsRemaining() > 0) {
+        useCredit();
+    }
+    renderCreditsBanner();
 
     destroyCharts();
     showProgress();
@@ -1033,66 +1218,48 @@ function renderFullResults(data) {
     const flowDirection = whale.net_flow_direction || 'Unknown';
     const flowColor = flowDirection.includes('INFLOW') ? 'var(--accent-green)' : 'var(--accent-red)';
 
-    document.getElementById('results').innerHTML = `
-        <!-- Decision Box -->
-        <div class="decision-box ${cls}">
-            <span class="badge ${rec.toLowerCase().replace(' ', '-')}">${rec}</span>
-            <div class="decision-title">${icon} ${txt}</div>
-            <div class="decision-sub">${sub}</div>
-            <div class="action-row">
-                <div class="action-icon buy">💰</div>
-                <div class="action-text">
-                    <div class="action-main" style="font-size:1.1rem">Buy ${bestSide}${targetName ? ' on <span style="color:var(--accent-cyan);font-weight:700">' + targetName + '</span>' : ''} at ${(entryPrice * 100).toFixed(1)}¢</div>
-                    <div class="action-detail">${posPct.toFixed(1)}% of $${budget.toLocaleString()} bankroll · R:R ${riskReward.toFixed(1)}x · ${roiIfWin.toFixed(0)}% ROI if correct</div>
-                </div>
-                <div class="action-amount">
-                    <div class="action-value" style="color:var(--accent-green)">$${posSize.toFixed(0)}</div>
-                    <div class="action-label">Position Size</div>
-                </div>
+    // Determine if this user gets full results or partial
+    const showFull = shouldShowFullResults();
+
+    // === BUILD ACTION ROW (blurred for free users without credits) ===
+    const actionRowHtml = `
+        <div class="action-row${showFull ? '' : ' action-row-blurred'}">
+            <div class="action-icon buy">💰</div>
+            <div class="action-text">
+                <div class="action-main" style="font-size:1.1rem">Buy ${bestSide}${targetName ? ' on <span style="color:var(--accent-cyan);font-weight:700">' + targetName + '</span>' : ''} at ${showFull ? (entryPrice * 100).toFixed(1) + '¢' : '██.█¢'}</div>
+                <div class="action-detail">${showFull ? posPct.toFixed(1) + '% of $' + budget.toLocaleString() + ' bankroll · R:R ' + riskReward.toFixed(1) + 'x · ' + roiIfWin.toFixed(0) + '% ROI if correct' : '██% of bankroll · R:R █.█x · ██% ROI'}</div>
+            </div>
+            <div class="action-amount">
+                <div class="action-value" style="color:var(--accent-green)">${showFull ? '$' + posSize.toFixed(0) : '$███'}</div>
+                <div class="action-label">Position Size</div>
             </div>
         </div>
+    `;
 
-        <!-- Event Info -->
-        <div class="card">
-            <div class="event-info">
-                ${ev.image ? '<img src="' + ev.image + '" class="event-img" onerror="this.style.display=\'none\'">' : ''}
-                <div>
-                    <div class="event-title">${ev.event_title || 'Unknown'}</div>
-                    <div class="event-meta">Volume: ${formatUSD(ev.event_volume || 0)} · Liquidity: ${formatUSD(ev.event_liquidity || 0)} · ${data.days_to_expiry ? data.days_to_expiry.toFixed(1) + ' days left' : ''}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Metrics — all from backend strategy -->
+    // === METRICS (blur all values for locked users — same style everywhere) ===
+    const metricsHtml = `
         <div class="metrics">
-            <div class="metric">
-                <div class="metric-val text-green">+${roiIfWin.toFixed(0)}%</div>
+            <div class="metric${showFull ? '' : ' metric-blurred'}">
+                <div class="metric-val text-green">${showFull ? '+' + roiIfWin.toFixed(0) + '%' : '+██%'}</div>
                 <div class="metric-lbl">ROI if Correct</div>
             </div>
-            <div class="metric">
-                <div class="metric-val text-blue">${posPct.toFixed(0)}%</div>
+            <div class="metric${showFull ? '' : ' metric-blurred'}">
+                <div class="metric-val text-blue">${showFull ? posPct.toFixed(0) + '%' : '██%'}</div>
                 <div class="metric-lbl">Position Size</div>
             </div>
-            <div class="metric">
-                <div class="metric-val text-cyan">${(entryPrice * 100).toFixed(1)}¢</div>
+            <div class="metric${showFull ? '' : ' metric-blurred'}">
+                <div class="metric-val text-cyan">${showFull ? (entryPrice * 100).toFixed(1) + '¢' : '██.█¢'}</div>
                 <div class="metric-lbl">Entry Price</div>
             </div>
-            <div class="metric">
-                <div class="metric-val text-yellow">${riskReward > 0 ? riskReward.toFixed(1) + 'x' : 'N/A'}</div>
+            <div class="metric${showFull ? '' : ' metric-blurred'}">
+                <div class="metric-val text-yellow">${showFull ? (riskReward > 0 ? riskReward.toFixed(1) + 'x' : 'N/A') : '█.█x'}</div>
                 <div class="metric-lbl">Risk/Reward</div>
             </div>
         </div>
+    `;
 
-        <!-- Tabs -->
-        <div class="result-tabs">
-            <button class="result-tab active" onclick="switchTab('charts')">Charts</button>
-            <button class="result-tab" onclick="switchTab('markets')">Markets</button>
-            <button class="result-tab" onclick="switchTab('whales')">Whales</button>
-            <button class="result-tab" onclick="switchTab('orderbook')">Orderbook</button>
-            <button class="result-tab" onclick="switchTab('ai')">AI Report</button>
-        </div>
-
-        <!-- Charts Tab -->
+    // === CHARTS TAB (visible for all; same blur style on other blocks) ===
+    const chartsTabHtml = `
         <div class="tab-content active" id="tab-charts">
             <div class="charts-grid">
                 <div class="chart-card">
@@ -1113,67 +1280,135 @@ function renderFullResults(data) {
                 </div>
             </div>
         </div>
-
-        <!-- Markets Tab -->
-        <div class="tab-content" id="tab-markets">
-            <div class="card">
-                <div class="card-title"><span class="dot"></span>Strike Analysis</div>
-                <div style="overflow-x:auto">
-                    <table class="data-table" id="strike-table"></table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Whales Tab -->
-        <div class="tab-content" id="tab-whales">
-            <div class="card">
-                <div class="card-title"><span class="dot" style="background:var(--accent-purple)"></span>Whale Activity</div>
-                <div class="whale-flow">
-                    <div class="whale-flow-icon">${flowDirection.includes('INFLOW') ? '📈' : '📉'}</div>
-                    <div class="whale-flow-text">
-                        <div class="whale-flow-direction" style="color:${flowColor}">${flowDirection}</div>
-                        <div class="whale-flow-stats">${whaleSummary.whale_count || 0} whales · Net: ${formatUSD(netFlow)}</div>
-                    </div>
-                </div>
-                <div style="overflow-x:auto">
-                    <table class="data-table" id="whale-table"></table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Orderbook Tab -->
-        <div class="tab-content" id="tab-orderbook">
-            <div class="card">
-                <div class="card-title"><span class="dot" style="background:var(--accent-cyan)"></span>Orderbook Depth</div>
-                <div style="overflow-x:auto">
-                    <table class="data-table" id="orderbook-table"></table>
-                </div>
-            </div>
-        </div>
-
-        <!-- AI Report Tab -->
-        <div class="tab-content" id="tab-ai">
-            <div class="ai-report">
-                <div class="card-title"><span class="dot" style="background:var(--accent-purple)"></span>Claude AI Analysis</div>
-                <div class="ai-report-content" id="ai-report-content"></div>
-            </div>
-        </div>
     `;
 
-    // Render charts
+    // === MARKETS TAB (locked for free users) ===
+    const marketsInner = `<div class="card">
+        <div class="card-title"><span class="dot"></span>Strike Analysis</div>
+        <div style="overflow-x:auto"><table class="data-table" id="strike-table"></table></div>
+    </div>`;
+    const marketsTabHtml = showFull
+        ? `<div class="tab-content" id="tab-markets">${marketsInner}</div>`
+        : `<div class="tab-content" id="tab-markets">${lockWrap(marketsInner, 'Unlock detailed strike analysis with entry prices, win probabilities & expected profit for every market.')}</div>`;
+
+    // === WHALES TAB (locked for free users) ===
+    const whalesInner = `<div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--accent-purple)"></span>Whale Activity</div>
+        <div class="whale-flow">
+            <div class="whale-flow-icon">${flowDirection.includes('INFLOW') ? '📈' : '📉'}</div>
+            <div class="whale-flow-text">
+                <div class="whale-flow-direction" style="color:${flowColor}">${flowDirection}</div>
+                <div class="whale-flow-stats">${whaleSummary.whale_count || 0} whales · Net: ${formatUSD(netFlow)}</div>
+            </div>
+        </div>
+        <div style="overflow-x:auto"><table class="data-table" id="whale-table"></table></div>
+    </div>`;
+    const whalesTabHtml = showFull
+        ? `<div class="tab-content" id="tab-whales">${whalesInner}</div>`
+        : `<div class="tab-content" id="tab-whales">${lockWrap(whalesInner, 'See which whale wallets are moving big money and whether smart money is buying or selling.')}</div>`;
+
+    // === ORDERBOOK TAB (locked for free users) ===
+    const orderbookInner = `<div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--accent-cyan)"></span>Orderbook Depth</div>
+        <div style="overflow-x:auto"><table class="data-table" id="orderbook-table"></table></div>
+    </div>`;
+    const orderbookTabHtml = showFull
+        ? `<div class="tab-content" id="tab-orderbook">${orderbookInner}</div>`
+        : `<div class="tab-content" id="tab-orderbook">${lockWrap(orderbookInner, 'See real-time bid/ask depth and spread data to find optimal entry points.')}</div>`;
+
+    // === AI REPORT TAB (locked for free users) ===
+    const aiInner = `<div class="ai-report">
+        <div class="card-title"><span class="dot" style="background:var(--accent-purple)"></span>Claude AI Analysis</div>
+        <div class="ai-report-content" id="ai-report-content"></div>
+    </div>`;
+    const aiTabHtml = showFull
+        ? `<div class="tab-content" id="tab-ai">${aiInner}</div>`
+        : `<div class="tab-content" id="tab-ai">${lockWrap(aiInner, 'Get a full AI-generated trade thesis with risk factors, catalysts and position management advice.')}</div>`;
+
+    // === LOCKED TABS BADGES ===
+    const lockIcon = showFull ? '' : ' &#128274;';
+
+    document.getElementById('results').innerHTML = `
+        <!-- Decision Box — ALWAYS FREE (the hook) -->
+        <div class="decision-box ${cls}">
+            <span class="badge ${rec.toLowerCase().replace(' ', '-')}">${rec}</span>
+            <div class="decision-title">${icon} ${txt}</div>
+            <div class="decision-sub">${showFull ? sub : 'Unlock premium to see full position details'}</div>
+            ${actionRowHtml}
+            ${!showFull ? '<div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text-muted)">&#128274; Position sizing, entry price & risk details require <a href="#" onclick="startCheckout();return false" style="color:#f97316;font-weight:600">Premium</a></div>' : ''}
+        </div>
+
+        <!-- Event Info — meta blurred when locked -->
+        <div class="card">
+            <div class="event-info">
+                ${ev.image ? '<img src="' + ev.image + '" class="event-img" onerror="this.style.display=\'none\'">' : ''}
+                <div>
+                    <div class="event-title">${ev.event_title || 'Unknown'}</div>
+                    <div class="event-meta ${showFull ? '' : 'event-meta-blurred'}">Volume: ${formatUSD(ev.event_volume || 0)} · Liquidity: ${formatUSD(ev.event_liquidity || 0)} · ${data.days_to_expiry ? data.days_to_expiry.toFixed(1) + ' days left' : ''}</div>
+                </div>
+            </div>
+        </div>
+
+        ${metricsHtml}
+
+        <!-- Tabs -->
+        <div class="result-tabs">
+            <button class="result-tab active" onclick="switchTab('charts')">Charts</button>
+            <button class="result-tab" onclick="switchTab('markets')">Markets${lockIcon}</button>
+            <button class="result-tab" onclick="switchTab('whales')">Whales${lockIcon}</button>
+            <button class="result-tab" onclick="switchTab('orderbook')">Orderbook${lockIcon}</button>
+            <button class="result-tab" onclick="switchTab('ai')">AI Report${lockIcon}</button>
+        </div>
+
+        ${chartsTabHtml}
+        ${marketsTabHtml}
+        ${whalesTabHtml}
+        ${orderbookTabHtml}
+        ${aiTabHtml}
+    `;
+
+    // Render charts (always visible — they're the teaser)
     setTimeout(() => renderCharts(data), 100);
 
-    // Render tables
-    renderStrikeTable(strikes, strat.best_market || '', strat.best_side || 'YES');
-    renderWhaleTable(whale.whale_wallets || []);
-    renderOrderbookTable(orderbook);
+    // Only render table data if user has access (otherwise it's behind blur anyway)
+    if (showFull) {
+        renderStrikeTable(strikes, strat.best_market || '', strat.best_side || 'YES');
+        renderWhaleTable(whale.whale_wallets || []);
+        renderOrderbookTable(orderbook);
 
-    // Render AI report
-    if (report) {
-        document.getElementById('ai-report-content').innerHTML = marked.parse(report);
+        if (report) {
+            document.getElementById('ai-report-content').innerHTML = marked.parse(report);
+        } else {
+            document.getElementById('ai-report-content').innerHTML = '<p style="color:var(--text-muted)">AI report not available</p>';
+        }
     } else {
-        document.getElementById('ai-report-content').innerHTML = '<p style="color:var(--text-muted)">AI report not available</p>';
+        // Render dummy placeholder data behind blur for visual effect
+        const strikeTable = document.getElementById('strike-table');
+        if (strikeTable) {
+            strikeTable.innerHTML = `<thead><tr><th>Market</th><th>YES Price</th><th>Best Side</th><th>Position</th><th>ROI</th><th>Win Prob</th></tr></thead>
+            <tbody>${strikes.slice(0, 3).map(s => `<tr><td>${(s.question || '').substring(0,20)}...</td><td>$0.██</td><td>███</td><td>$███</td><td>██%</td><td>██%</td></tr>`).join('')}</tbody>`;
+        }
+        const whaleTable = document.getElementById('whale-table');
+        if (whaleTable) {
+            whaleTable.innerHTML = `<thead><tr><th>Wallet</th><th>Volume</th><th>Txns</th><th>Direction</th></tr></thead>
+            <tbody><tr><td>0x████...████</td><td>$██,███</td><td>██</td><td>███ █████</td></tr>
+            <tr><td>0x████...████</td><td>$██,███</td><td>██</td><td>███ █████</td></tr></tbody>`;
+        }
+        const orderbookTable = document.getElementById('orderbook-table');
+        if (orderbookTable) {
+            orderbookTable.innerHTML = `<thead><tr><th>Market</th><th>Bid</th><th>Ask</th><th>Spread</th></tr></thead>
+            <tbody><tr><td>██████████</td><td>$0.██</td><td>$0.██</td><td>█.█%</td></tr></tbody>`;
+        }
+        const aiContent = document.getElementById('ai-report-content');
+        if (aiContent) {
+            aiContent.innerHTML = `<h2>Executive Summary</h2><p>████████ ████ ██████ ████████ ███ ██████████ ████ ██████ ████████ █████ ██████ █████████. ████████ ██ ████ ████████ ████ ██████ ████████.</p>
+            <h2>Trade Recommendation</h2><p>████████ ████ ██████ ████████ ███ ██████████ ████ ██████. ████████ ████ ██████ ████████ ███ ██████████ ████ ██████.</p>
+            <h2>Key Risks</h2><ul><li>████████ ████ ██████ ████████</li><li>██████████ ████ ██████ ████████</li><li>████████ ███ ██████████ ████</li></ul>`;
+        }
     }
+
+    // Update credits banner after rendering
+    renderCreditsBanner();
 }
 
 function switchTab(tab) {
@@ -1188,35 +1423,56 @@ function renderCharts(data) {
     const strikes = data.strike_analysis || [];
     if (!strikes.length) return;
 
+    // Ensure at least 2 points for line charts so lines render (not just a dot)
     const labels = strikes.map(s => s.strike > 0 ? '$' + s.strike : (s.question || '').substring(0, 15));
+    const labelsForLines = labels.length === 1 ? [labels[0], ''] : labels;
     const gridColor = 'rgba(30,39,54,0.6)';
 
     Chart.defaults.color = '#505b6e';
     Chart.defaults.borderColor = '#1e2736';
 
-    // Probability Chart
+    // Helper: true probability with fallback to market price then 50%
+    function trueProb(s) {
+        const bs = s.black_scholes || {};
+        const pm = s.polymarket || {};
+        const v = bs.true_probability ?? pm.yes_price ?? 0.5;
+        return (typeof v === 'number' && v > 0) ? v * 100 : (pm.yes_price || 0.5) * 100;
+    }
+    function marketPricePct(s) {
+        return ((s.polymarket || {}).yes_price || 0) * 100;
+    }
+
+    // Probability Chart — both series always have data; duplicate point if single market
+    const marketData = strikes.map(s => marketPricePct(s));
+    const trueData = strikes.map(s => trueProb(s));
+    if (strikes.length === 1) {
+        marketData.push(marketData[0]);
+        trueData.push(trueData[0]);
+    }
     const ctx1 = document.getElementById('chart-prob');
     if (ctx1) {
         chartInstances.prob = new Chart(ctx1, {
             type: 'line',
             data: {
-                labels,
+                labels: labelsForLines,
                 datasets: [
                     {
                         label: 'Market Price',
-                        data: strikes.map(s => ((s.polymarket || {}).yes_price || 0) * 100),
+                        data: marketData,
                         borderColor: '#3b82f6',
                         backgroundColor: 'rgba(59,130,246,0.1)',
                         fill: true,
                         tension: 0.4,
+                        pointRadius: strikes.length === 1 ? 4 : 3,
                     },
                     {
                         label: 'True Probability',
-                        data: strikes.map(s => ((s.black_scholes || {}).true_probability || 0) * 100),
+                        data: trueData,
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16,185,129,0.1)',
                         fill: true,
                         tension: 0.4,
+                        pointRadius: strikes.length === 1 ? 4 : 3,
                     }
                 ]
             },
@@ -1231,7 +1487,7 @@ function renderCharts(data) {
         });
     }
 
-    // ROI Chart
+    // ROI Chart — ensure numeric fallbacks
     const ctx2 = document.getElementById('chart-roi');
     if (ctx2) {
         chartInstances.roi = new Chart(ctx2, {
@@ -1241,14 +1497,14 @@ function renderCharts(data) {
                 datasets: [
                     {
                         label: 'ROI if YES',
-                        data: strikes.map(s => ((s.roi_yes_wins || {}).roi_percent || 0)),
+                        data: strikes.map(s => Number((s.roi_yes_wins || {}).roi_percent) || 0),
                         backgroundColor: 'rgba(16,185,129,0.6)',
                         borderColor: '#10b981',
                         borderWidth: 1,
                     },
                     {
                         label: 'ROI if NO',
-                        data: strikes.map(s => ((s.roi_no_wins || {}).roi_percent || 0)),
+                        data: strikes.map(s => Number((s.roi_no_wins || {}).roi_percent) || 0),
                         backgroundColor: 'rgba(139,92,246,0.6)',
                         borderColor: '#8b5cf6',
                         borderWidth: 1,
@@ -1266,27 +1522,29 @@ function renderCharts(data) {
         });
     }
 
-    // Volume Chart
+    // Volume & Liquidity — bar chart so each market shows clearly (no empty line)
     const ctx3 = document.getElementById('chart-volume');
     if (ctx3) {
+        const volData = strikes.map(s => Number((s.polymarket || {}).volume) || 0);
+        const liqData = strikes.map(s => Number((s.polymarket || {}).liquidity) || 0);
         chartInstances.volume = new Chart(ctx3, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels,
                 datasets: [
                     {
                         label: 'Volume',
-                        data: strikes.map(s => (s.polymarket || {}).volume || 0),
+                        data: volData,
+                        backgroundColor: 'rgba(139,92,246,0.6)',
                         borderColor: '#8b5cf6',
-                        backgroundColor: 'rgba(139,92,246,0.1)',
-                        fill: true,
+                        borderWidth: 1,
                     },
                     {
                         label: 'Liquidity',
-                        data: strikes.map(s => (s.polymarket || {}).liquidity || 0),
+                        data: liqData,
+                        backgroundColor: 'rgba(6,182,212,0.6)',
                         borderColor: '#06b6d4',
-                        backgroundColor: 'rgba(6,182,212,0.1)',
-                        fill: true,
+                        borderWidth: 1,
                     }
                 ]
             },
@@ -1301,7 +1559,7 @@ function renderCharts(data) {
         });
     }
 
-    // Kelly Chart
+    // Kelly Chart — ensure numeric fallbacks
     const ctx4 = document.getElementById('chart-kelly');
     if (ctx4) {
         chartInstances.kelly = new Chart(ctx4, {
@@ -1311,12 +1569,12 @@ function renderCharts(data) {
                 datasets: [
                     {
                         label: 'YES Position %',
-                        data: strikes.map(s => ((s.kelly || {}).YES || {}).aggressive_kelly_pct || 0),
+                        data: strikes.map(s => Number(((s.kelly || {}).YES || {}).aggressive_kelly_pct) || 0),
                         backgroundColor: 'rgba(16,185,129,0.6)',
                     },
                     {
                         label: 'NO Position %',
-                        data: strikes.map(s => ((s.kelly || {}).NO || {}).aggressive_kelly_pct || 0),
+                        data: strikes.map(s => Number(((s.kelly || {}).NO || {}).aggressive_kelly_pct) || 0),
                         backgroundColor: 'rgba(239,68,68,0.6)',
                     }
                 ]
@@ -1474,5 +1732,8 @@ document.getElementById('eventUrl').addEventListener('keypress', e => {
 });
 
 loadHot();
+
+// Show credits banner after auth gate resolves (slight delay to let base.html set window.__userSubscribed)
+setTimeout(() => renderCreditsBanner(), 800);
 </script>
 {% endblock %}

@@ -3,7 +3,7 @@ PolyScalping - Unified Dashboard Server
 Combines all features: Event Analyzer, ROI Calculator, Hot Markets, Whale Tracking
 Now with FULL comprehensive analysis pipeline using all APIs
 """
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect
 from flask_cors import CORS
 import sys
 import os
@@ -34,13 +34,13 @@ STRIPE_PRICE_MONTHLY = os.getenv('STRIPE_PRICE_ID_MONTHLY')
 STRIPE_PRICE_ANNUAL = os.getenv('STRIPE_PRICE_ID_ANNUAL')
 
 # Meta Conversions API (server-side events via Stape CAPIG)
-META_PIXEL_ID = os.getenv('META_PIXEL_ID', '918915764058613')
-META_CAPI_ACCESS_TOKEN = os.getenv('META_CAPI_ACCESS_TOKEN', '')
-META_TEST_EVENT_CODE = os.getenv('META_TEST_EVENT_CODE', '')  # e.g. TEST7566
+META_PIXEL_ID = os.getenv('META_PIXEL_ID', '1419170066573613')
+META_CAPI_ACCESS_TOKEN = os.getenv('META_CAPI_ACCESS_TOKEN', 'EAAc5en10DmsBQ0C9csbeZCqm25Lw8m8UpgdiMMr8VYdWEZA49VaavJOTqpZAZCMRWIQhAZCsKbkCvaYLkcsCjIEIdTle5YE1Dr9SqGFcWGyuHjlsCcOcVtRl6RSs7mXFFZB88ATitD2FhyZB5ufpP9tIsXrrtSMZCLjDGGDaK9daxTDrljWE6sCCfHuniO7hAYr4VgZDZD')
+META_TEST_EVENT_CODE = os.getenv('META_TEST_EVENT_CODE', 'TEST97451')
 
 # Stape CAPIG (Conversions API Gateway) — proxies events to Meta CAPI
-STAPE_CAPIG_URL = os.getenv('STAPE_CAPIG_URL', '')          # e.g. https://capig.stape.be
-STAPE_CAPIG_IDENTIFIER = os.getenv('STAPE_CAPIG_IDENTIFIER', '')  # e.g. tmibmhmp
+STAPE_CAPIG_URL = os.getenv('STAPE_CAPIG_URL', 'https://sa.stape.co')
+STAPE_CAPIG_IDENTIFIER = os.getenv('STAPE_CAPIG_IDENTIFIER', 'ruavjkqi')
 
 def meta_capi_event(event_name, user_data=None, custom_data=None, event_source_url=None):
     """Send a server-side event to Meta Conversions API via Stape CAPIG.
@@ -976,11 +976,22 @@ Keep it under 500 words. Be specific with numbers and position sizes."""
 # ============================================================================
 # FULL ANALYSIS PIPELINE
 # ============================================================================
+def _wait_until_elapsed(pipeline_start, min_elapsed):
+    """Sleep so that at least min_elapsed seconds have passed since pipeline_start."""
+    elapsed = time.time() - pipeline_start
+    if elapsed < min_elapsed:
+        time.sleep(min_elapsed - elapsed)
+
+
 def run_full_analysis(job_id, slug, budget):
-    """Run the full 10-step analysis pipeline."""
+    """Run the full 10-step analysis pipeline. Steps are spread over 25s so progress bar fills proportionally."""
+    pipeline_start = time.time()
+    total_duration = 25.0
+    n_steps = len(PIPELINE_STEPS)
 
     try:
-        # Step 1: Polymarket event
+        # Step 1: Polymarket event (0–2.5s)
+        _wait_until_elapsed(pipeline_start, 0)
         _update_job(job_id, {"step": 1, "step_label": PIPELINE_STEPS[0]})
         event = fetch_polymarket_event(slug)
         if not event:
@@ -992,7 +1003,8 @@ def run_full_analysis(job_id, slug, budget):
         ticker = extract_ticker(event["event_title"])
         is_sports = is_sports_event(event["event_title"])
 
-        # Step 2: Stock/Asset data
+        # Step 2: Stock/Asset data (2.5–5s)
+        _wait_until_elapsed(pipeline_start, 1 * total_duration / n_steps)
         _update_job(job_id, {"step": 2, "step_label": PIPELINE_STEPS[1]})
         stock = None
         spot = 0
@@ -1010,7 +1022,8 @@ def run_full_analysis(job_id, slug, budget):
         except:
             days_left = 7  # Default to 7 days
 
-        # Step 3: Probability models
+        # Step 3: Probability models (5–7.5s)
+        _wait_until_elapsed(pipeline_start, 2 * total_duration / n_steps)
         _update_job(job_id, {"step": 3, "step_label": PIPELINE_STEPS[2]})
         all_analysis = []
         for m in markets:
@@ -1051,13 +1064,15 @@ def run_full_analysis(job_id, slug, budget):
                 "roi_no_wins": roi_no,
             })
 
-        # Step 4: Sports odds
+        # Step 4: Sports odds (7.5–10s)
+        _wait_until_elapsed(pipeline_start, 3 * total_duration / n_steps)
         _update_job(job_id, {"step": 4, "step_label": PIPELINE_STEPS[3]})
         sports_odds = {}
         if is_sports:
             sports_odds = fetch_sports_odds(event["event_title"])
 
-        # Step 5: Kalshi comparison
+        # Step 5: Kalshi comparison (10–12.5s)
+        _wait_until_elapsed(pipeline_start, 4 * total_duration / n_steps)
         _update_job(job_id, {"step": 5, "step_label": PIPELINE_STEPS[4]})
         title_words = re.findall(r'[A-Za-z]{3,}', event["event_title"])
         skip_words = {"will", "the", "and", "for", "that", "this", "are", "was", "above", "below", "close"}
@@ -1066,15 +1081,18 @@ def run_full_analysis(job_id, slug, budget):
             search_kws.insert(0, ticker)
         kalshi_data = fetch_kalshi_markets(search_kws)
 
-        # Step 6: Whale tracking
+        # Step 6: Whale tracking (12.5–15s)
+        _wait_until_elapsed(pipeline_start, 5 * total_duration / n_steps)
         _update_job(job_id, {"step": 6, "step_label": PIPELINE_STEPS[5]})
         whale_data = fetch_whale_activity()
 
-        # Step 7: Orderbook depth
+        # Step 7: Orderbook depth (15–17.5s)
+        _wait_until_elapsed(pipeline_start, 6 * total_duration / n_steps)
         _update_job(job_id, {"step": 7, "step_label": PIPELINE_STEPS[6]})
         orderbook_data = fetch_orderbook_depth(markets)
 
-        # Step 8: Strategy calculations
+        # Step 8: Strategy calculations (17.5–20s)
+        _wait_until_elapsed(pipeline_start, 7 * total_duration / n_steps)
         _update_job(job_id, {"step": 8, "step_label": PIPELINE_STEPS[7]})
 
         # Find best opportunity - REALISTIC RETURNS philosophy
@@ -1224,7 +1242,8 @@ def run_full_analysis(job_id, slug, budget):
                 if strategy["max_loss"] > 0:
                     strategy["risk_reward"] = round(strategy["potential_profit"] / strategy["max_loss"], 2)
 
-        # Step 9: AI Report
+        # Step 9: AI Report (20–22.5s)
+        _wait_until_elapsed(pipeline_start, 8 * total_duration / n_steps)
         _update_job(job_id, {"step": 9, "step_label": PIPELINE_STEPS[8]})
         full_data = {
             "event": event,
@@ -1240,7 +1259,8 @@ def run_full_analysis(job_id, slug, budget):
         }
         claude_report = generate_claude_report(full_data)
 
-        # Step 10: Finalize
+        # Step 10: Finalize (22.5–25s)
+        _wait_until_elapsed(pipeline_start, 9 * total_duration / n_steps)
         _update_job(job_id, {"step": 10, "step_label": PIPELINE_STEPS[9]})
 
         result = {
@@ -1259,6 +1279,9 @@ def run_full_analysis(job_id, slug, budget):
             "ticker": ticker,
             "is_sports": is_sports,
         }
+
+        # Ensure full 25 seconds before showing results (progress bar filled proportionally)
+        _wait_until_elapsed(pipeline_start, total_duration)
 
         _update_job(job_id, {"status": "completed", "step": 10, "step_label": "Analysis complete!", "result": result})
 
@@ -1540,7 +1563,7 @@ def forgot_password_page():
 
 @app.route("/dashboard")
 def dashboard_page():
-    return render_template("dashboard.html", page="dashboard")
+    return redirect("/analyzer")
 
 @app.route("/markets")
 def markets_page():
@@ -1918,8 +1941,6 @@ def stripe_webhook():
                 'stripe_customer_id': stripe_customer_id
             }, match={'id': supabase_user_id})
 
-            print(f'[STRIPE WEBHOOK] User {supabase_user_id} subscribed ({plan})')
-
             # Fire Purchase event to Meta Conversions API (server-side)
             customer_email = session.get('customer_email', '')
             purchase_value = 99.99 if plan == 'annual' else 19.99
@@ -1936,6 +1957,8 @@ def stripe_webhook():
                 },
                 event_source_url='https://www.poly-hunter.com/dashboard'
             )
+
+            print(f'[STRIPE WEBHOOK] User {supabase_user_id} subscribed ({plan})')
 
     # --- SUBSCRIPTION UPDATED ---
     elif event_type == 'customer.subscription.updated':

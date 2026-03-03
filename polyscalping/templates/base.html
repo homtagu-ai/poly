@@ -1290,11 +1290,11 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '918915764058613');
+    fbq('init', '1419170066573613');
     fbq('track', 'PageView');
     </script>
     <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=918915764058613&ev=PageView&noscript=1"/></noscript>
+    src="https://www.facebook.com/tr?id=1419170066573613&ev=PageView&noscript=1"/></noscript>
     <!-- End Meta Pixel Code -->
 
     <!-- X conversion tracking base code -->
@@ -1318,7 +1318,6 @@
         </div>
 
         <div class="nav-links" id="navLinks">
-            <a href="/dashboard" class="nav-link {% if page == 'dashboard' %}active{% endif %}">Dashboard</a>
             <a href="/markets" class="nav-link {% if page == 'markets' %}active{% endif %}">Markets</a>
             <a href="/whales" class="nav-link {% if page == 'whales' %}active{% endif %}">Whales</a>
             <a href="/calculator" class="nav-link {% if page == 'calculator' %}active{% endif %}">Calculator</a>
@@ -1575,9 +1574,14 @@
                 navUsername.textContent = profile?.username || user.email.split('@')[0];
                 navUser.style.display = 'flex';
 
-                // Show paywall overlay if not subscribed (skip on settings page)
+                // Expose subscription state globally for child pages
+                window.__userSubscribed = profile?.is_subscribed || false;
+                window.__userId = user.id;
+                window.__userEmail = user.email;
+
+                // Show paywall overlay if not subscribed (skip on settings & analyzer pages)
                 const currentPage = '{{ page }}';
-                if (profile && !profile.is_subscribed && currentPage !== 'settings') {
+                if (profile && !profile.is_subscribed && currentPage !== 'settings' && currentPage !== 'analyzer') {
                     showPaywallOverlay();
                 }
             }
