@@ -19,11 +19,27 @@ echo "  PolyHunter Setup"
 echo "  App dir: $APP_DIR"
 echo "=========================================="
 
-# 1. Python virtualenv
+# 1. Python virtualenv (need 3.10+ for modern packages)
 echo "[1/4] Setting up Python virtualenv..."
 cd "$APP_DIR"
+
+# Find best available Python (prefer 3.12, then 3.13, 3.11, 3.10)
+PYTHON_BIN=""
+for v in python3.12 python3.13 python3.11 python3.10; do
+    if command -v "$v" &>/dev/null; then
+        PYTHON_BIN="$v"
+        break
+    fi
+done
+if [ -z "$PYTHON_BIN" ]; then
+    echo "  ERROR: Python 3.10+ is required but not found!"
+    echo "  Available: $(ls /usr/bin/python3.* 2>/dev/null | tr '\n' ' ')"
+    exit 1
+fi
+echo "  Using $PYTHON_BIN ($($PYTHON_BIN --version 2>&1))"
+
 if [ ! -d ".venv" ]; then
-    python3 -m venv .venv
+    $PYTHON_BIN -m venv .venv
 fi
 source .venv/bin/activate
 pip install --upgrade pip
