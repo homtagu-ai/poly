@@ -30,6 +30,8 @@ interface TelegramWebApp {
   expand(): void
   close(): void
   ready(): void
+  setHeaderColor(color: string): void
+  setBackgroundColor(color: string): void
 }
 
 interface Window {

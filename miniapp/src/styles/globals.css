@@ -2,31 +2,174 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   PolyHunter Mini App — Premium Dark Navy Theme
+   Matches the web app design system
+   ============================================================ */
+
 @layer base {
   body {
     @apply bg-bg-primary text-text-primary font-sans;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  ::selection {
+    background: rgba(59, 165, 181, 0.3);
+    color: #fff;
+  }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: #0b1520; }
+  ::-webkit-scrollbar-thumb { background: #243848; border-radius: 2px; }
 }
 
 @layer components {
+
+  /* ── Cards ─────────────────────────────────────────── */
   .card {
-    @apply bg-bg-secondary rounded-xl p-4 border border-bg-tertiary;
+    @apply bg-bg-card rounded-xl p-4;
+    border: 1px solid #1c3040;
+    transition: background 0.3s, border-color 0.3s, transform 0.2s;
   }
+  .card-clickable:active {
+    background: #1a2d3d;
+    border-color: #2d3a4f;
+    transform: scale(0.99);
+  }
+  .card-glow {
+    box-shadow: 0 0 20px rgba(59, 165, 181, 0.08), 0 0 40px rgba(13, 211, 206, 0.04);
+  }
+
+  /* ── Animated border card ──────────────────────────── */
+  @property --border-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+  .card-animated-border {
+    @apply relative rounded-xl overflow-hidden;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--border-angle, 0deg),
+      transparent 0%, transparent 25%,
+      #3ba5b5 30%, #0dd3ce 50%, #7ee8fa 70%,
+      transparent 75%, transparent 100%
+    );
+    animation: borderRotate 4s linear infinite;
+  }
+  .card-animated-border > * {
+    @apply bg-bg-card rounded-xl;
+  }
+  @keyframes borderRotate {
+    0% { --border-angle: 0deg; }
+    100% { --border-angle: 360deg; }
+  }
+
+  /* ── Buttons ───────────────────────────────────────── */
   .btn-primary {
-    @apply bg-accent-teal text-bg-primary font-semibold px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity;
+    @apply font-bold text-white text-sm;
+    padding: 10px 24px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #2e8a97, #3ba5b5, #0dd3ce, #3edbd5, #10b981, #3ba5b5, #2e8a97);
+    background-size: 300% 100%;
+    animation: gradientShift 3s ease-in-out infinite;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.3px;
+    transition: transform 0.2s, box-shadow 0.2s;
   }
+  .btn-primary:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(59, 165, 181, 0.4);
+  }
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
   .btn-secondary {
-    @apply bg-bg-tertiary text-text-primary font-medium px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity;
+    @apply font-medium text-sm text-text-primary;
+    padding: 10px 24px;
+    border-radius: 9999px;
+    background: transparent;
+    border: 1px solid #243848;
+    transition: border-color 0.2s, background 0.2s;
   }
+  .btn-secondary:active {
+    border-color: #507080;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  /* ── Badges ────────────────────────────────────────── */
   .badge-active {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent-green/20 text-accent-green;
+    @apply inline-flex items-center gap-1 text-xs font-semibold;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
   }
   .badge-paused {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent-red/20 text-accent-red;
+    @apply inline-flex items-center gap-1 text-xs font-semibold;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
   }
+
+  /* ── Dividers ──────────────────────────────────────── */
   .divider {
-    @apply border-t border-bg-tertiary my-3;
+    @apply my-3;
+    border-top: 1px solid #1c3040;
   }
+
+  /* ── Gradient text ─────────────────────────────────── */
+  .text-gradient {
+    background: linear-gradient(135deg, #3ba5b5, #0dd3ce, #3edbd5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Glass navbar ──────────────────────────────────── */
+  .glass-nav {
+    background: rgba(16, 28, 40, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(59, 165, 181, 0.12);
+  }
+
+  /* ── Section header ────────────────────────────────── */
+  .section-header {
+    @apply text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2;
+    letter-spacing: 1.2px;
+  }
+
+  /* ── Spinner ───────────────────────────────────────── */
+  .spinner {
+    @apply w-8 h-8 rounded-full;
+    border: 3px solid #243848;
+    border-top-color: #3ba5b5;
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* ── Glow effects ──────────────────────────────────── */
+  .glow-ring {
+    box-shadow:
+      0 0 0 1px rgba(59, 165, 181, 0.15),
+      0 0 20px rgba(59, 165, 181, 0.08);
+  }
+}
+
+/* ── Radial glow background accent ─────────────────── */
+.bg-glow::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200%;
+  height: 200px;
+  background: radial-gradient(ellipse at center, rgba(59,165,181,0.07) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }

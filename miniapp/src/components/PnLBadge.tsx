@@ -6,21 +6,25 @@ interface PnLBadgeProps {
 
 export default function PnLBadge({ value, percentage, size = 'md' }: PnLBadgeProps) {
   const isPositive = value >= 0
-  const color = isPositive ? 'text-accent-green' : 'text-accent-red'
+  const color = isPositive ? '#10b981' : '#ef4444'
+  const bgColor = isPositive ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'
   const sign = isPositive ? '+' : ''
-  const dot = isPositive ? '\u{1F7E2}' : '\u{1F534}'
 
   const sizeClasses = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-xl font-bold',
+    sm: 'text-sm px-2 py-0.5',
+    md: 'text-base px-2.5 py-0.5',
+    lg: 'text-lg font-bold px-3 py-1',
   }
 
   return (
-    <span className={`${color} ${sizeClasses[size]} font-mono`}>
-      {dot} {sign}${Math.abs(value).toFixed(2)}
+    <span
+      className={`inline-flex items-center gap-1 font-mono rounded-lg ${sizeClasses[size]}`}
+      style={{ color, background: bgColor }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+      {sign}${Math.abs(value).toFixed(2)}
       {percentage !== undefined && (
-        <span className="text-text-secondary ml-1">
+        <span className="text-text-secondary ml-0.5 text-xs">
           ({sign}{Math.abs(percentage).toFixed(1)}%)
         </span>
       )}
