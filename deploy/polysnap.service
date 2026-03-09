@@ -1,20 +1,22 @@
 [Unit]
-Description=PolySnap Web App (Gunicorn)
+Description=PolyHunter Web App (Gunicorn)
 After=network.target
 
 [Service]
-User=ubuntu
-Group=ubuntu
-WorkingDirectory=/home/ubuntu/poly
-EnvironmentFile=/home/ubuntu/poly/.env
-ExecStart=/home/ubuntu/poly/venv/bin/gunicorn \
-    --config /home/ubuntu/poly/deploy/gunicorn.conf.py \
+User=te605656
+Group=te605656
+WorkingDirectory=/home/te605656/poly-hunter.com/www
+EnvironmentFile=/home/te605656/poly-hunter.com/www/.env
+Environment=PORT=3000
+Environment=BIND_IP=127.1.7.92
+ExecStart=/home/te605656/poly-hunter.com/www/.venv/bin/gunicorn \
+    --config /home/te605656/poly-hunter.com/www/deploy/gunicorn.conf.py \
     polyscalping.server:app
 Restart=always
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=polysnap
+SyslogIdentifier=polyhunter
 
 # Hardening
 NoNewPrivileges=true

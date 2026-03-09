@@ -1943,7 +1943,7 @@ def stripe_webhook():
 
             # Fire Purchase event to Meta Conversions API (server-side)
             customer_email = session.get('customer_email', '')
-            purchase_value = 99.99 if plan == 'annual' else 19.99
+            purchase_value = 79.99 if plan == 'annual' else 14.99
             user_data_meta = {}
             if customer_email:
                 user_data_meta['em'] = [hashlib.sha256(customer_email.lower().strip().encode()).hexdigest()]
@@ -2016,13 +2016,49 @@ def stripe_webhook():
 
 
 # ============================================================================
+# TELEGRAM MINI APP API
+# ============================================================================
+from polyscalping.tma_api import tma_blueprint
+app.register_blueprint(tma_blueprint)
+
+# ---------------------------------------------------------------------------
+# Serve Mini App static files (for hosting environments without Nginx control)
+# ---------------------------------------------------------------------------
+_MINIAPP_DIST = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'miniapp', 'dist',
+)
+
+if os.path.isdir(_MINIAPP_DIST):
+    from flask import send_from_directory
+
+    @app.route('/tma/')
+    @app.route('/tma/<path:path>')
+    def serve_miniapp(path='index.html'):
+        """Serve the Telegram Mini App SPA from miniapp/dist/.
+
+        For any path under /tma/ that doesn't match a real file,
+        fall back to index.html (SPA client-side routing).
+        """
+        # Don't intercept API routes — they're handled by the blueprint
+        if path.startswith('api/'):
+            from flask import abort
+            abort(404)
+
+        full_path = os.path.join(_MINIAPP_DIST, path)
+        if os.path.isfile(full_path):
+            return send_from_directory(_MINIAPP_DIST, path)
+        # SPA fallback: serve index.html for client-side routes
+        return send_from_directory(_MINIAPP_DIST, 'index.html')
+
+# ============================================================================
 # MAIN
 # ============================================================================
 if __name__ == "__main__":
     import os
     debug = os.getenv("DEBUG", "false").lower() == "true"
     host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", 5050))
+    port = int(os.getenv("PORT", 3000))
 
     print("\n" + "="*60)
     print("  POLYHUNTER - Unified Dashboard")

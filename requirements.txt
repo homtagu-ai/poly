@@ -23,6 +23,7 @@ numpy>=1.26.3
 # BLOCKCHAIN / WEB3
 web3>=6.15.1
 eth-account>=0.11.0
+py-clob-client>=0.15.0
 
 # DATA PROCESSING
 pandas>=2.1.4
@@ -33,6 +34,13 @@ stripe>=7.0.0
 
 # ENVIRONMENT & SECURITY
 python-dotenv>=1.0.0
+cryptography>=42.0.0
+
+# TELEGRAM BOT
+python-telegram-bot>=21.0
+
+# IMAGE GENERATION
+Pillow>=10.0.0
 
 # UTILITIES
 python-slugify>=8.0.1

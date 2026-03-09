@@ -1679,8 +1679,8 @@
                                 <div class="plan-desc">Billed monthly &bull; Cancel anytime</div>
                             </div>
                             <div class="plan-card-price">
-                                <div class="plan-original-price">$21.99/mo</div>
-                                <div class="price-main">$19<span>.99/mo</span></div>
+                                <div class="plan-original-price">$19.99/mo</div>
+                                <div class="price-main">$14<span>.99/mo</span></div>
                             </div>
                         </div>
                         <div class="plan-card selected" onclick="selectPlan('annual', this)">
@@ -1688,11 +1688,11 @@
                             <div class="plan-card-radio"></div>
                             <div class="plan-card-info">
                                 <div class="plan-name">Annual</div>
-                                <div class="plan-desc">Billed $99.99/year <span class="plan-original-price" style="display:inline">$109.99</span></div>
+                                <div class="plan-desc">Billed $79.99/year <span class="plan-original-price" style="display:inline">$99.99</span></div>
                             </div>
                             <div class="plan-card-price">
-                                <div class="plan-original-price">$9.17/mo</div>
-                                <div class="price-main">$8<span>.33/mo</span></div>
+                                <div class="plan-original-price">$14.99/mo</div>
+                                <div class="price-main">$6<span>.67/mo</span></div>
                                 <div class="price-note">Best value</div>
                             </div>
                         </div>
@@ -1779,13 +1779,13 @@
                         fbq('track', 'InitiateCheckout', {
                             content_name: selectedPlan === 'annual' ? 'PolyHunter Annual' : 'PolyHunter Monthly',
                             currency: 'USD',
-                            value: selectedPlan === 'annual' ? 99.99 : 19.99
+                            value: selectedPlan === 'annual' ? 79.99 : 14.99
                         });
                     }
                     // Fire X/Twitter InitiateCheckout event
                     if (typeof twq === 'function') {
                         twq('event', 'tw-r5r0h-r5r0i', {
-                            value: selectedPlan === 'annual' ? 99.99 : 19.99,
+                            value: selectedPlan === 'annual' ? 79.99 : 14.99,
                             currency: 'USD',
                             content_name: selectedPlan === 'annual' ? 'PolyHunter Annual' : 'PolyHunter Monthly'
                         });

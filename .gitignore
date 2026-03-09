@@ -5,8 +5,24 @@ __pycache__/
 *.db
 .claude/
 venv/
+.venv/
 *.egg-info/
 dist/
 build/
 .pytest_cache/
 nul
+
+# OS
+.DS_Store
+
+# Node
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Generated docs (not source)
+*.pdf
+1.docx
+generate_security_pdf.py

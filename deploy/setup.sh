@@ -1,80 +1,77 @@
 #!/bin/bash
-# PolySnap Production Setup Script
-# Run this on your EC2 instance after cloning the repo to /home/ubuntu/poly
+# PolyHunter — Deployment setup for Ukrainian Hosting (hosting.ua)
 #
-# Usage: sudo bash /home/ubuntu/poly/deploy/setup.sh
+# Hosting environment:
+#   User:     te605656
+#   App dir:  /home/te605656/poly-hunter.com/www/
+#   Proxy:    www.poly-hunter.com → 127.1.7.92:3000
+#   SSL:      Managed by hosting provider
+#   Startup:  Hosting panel manages the process
+#
+# This script is for initial setup / updates via SSH.
+# Usage: cd /home/te605656/poly-hunter.com/www && bash deploy/setup.sh
 
 set -e
 
-APP_DIR="/home/ubuntu/poly"
-DEPLOY_DIR="$APP_DIR/deploy"
-
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "=========================================="
-echo "  PolySnap Production Setup"
+echo "  PolyHunter Setup"
+echo "  App dir: $APP_DIR"
 echo "=========================================="
 
-# 1. System updates & install Nginx
-echo "[1/8] Installing system packages..."
-apt-get update -y
-apt-get install -y nginx python3-venv python3-pip
+# 1. Python virtualenv
+echo "[1/4] Setting up Python virtualenv..."
+cd "$APP_DIR"
+if [ ! -d ".venv" ]; then
+    python3 -m venv .venv
+fi
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+echo "  Python dependencies installed."
 
-# 2. Create swap file (prevents OOM kills on t3.micro)
-echo "[2/8] Setting up 1GB swap file..."
-if [ ! -f /swapfile ]; then
-    fallocate -l 1G /swapfile
-    chmod 600 /swapfile
-    mkswap /swapfile
-    swapon /swapfile
-    echo '/swapfile none swap sw 0 0' >> /etc/fstab
-    echo "  Swap created."
+# 2. Build Mini App (requires Node.js — pre-installed by hosting)
+echo "[2/4] Building Telegram Mini App..."
+if [ -d "miniapp" ]; then
+    cd miniapp
+    npm install --production=false
+    npm run build
+    cd "$APP_DIR"
+    echo "  Mini App built to miniapp/dist/"
 else
-    echo "  Swap already exists, skipping."
+    echo "  SKIP: miniapp/ directory not found."
 fi
 
-# 3. Create virtualenv and install dependencies
-echo "[3/8] Setting up Python virtualenv..."
-if [ ! -d "$APP_DIR/venv" ]; then
-    python3 -m venv "$APP_DIR/venv"
-fi
-"$APP_DIR/venv/bin/pip" install --upgrade pip
-"$APP_DIR/venv/bin/pip" install -r "$APP_DIR/requirements.txt"
-
-# 4. Create logs directory
-echo "[4/8] Creating logs directory..."
+# 3. Create logs directory
+echo "[3/4] Creating logs directory..."
 mkdir -p "$APP_DIR/logs"
-chown -R ubuntu:ubuntu "$APP_DIR/logs"
 
-# 5. Install systemd service
-echo "[5/8] Installing systemd service..."
-cp "$DEPLOY_DIR/polysnap.service" /etc/systemd/system/polysnap.service
-systemctl daemon-reload
-systemctl enable polysnap.service
+# 4. Verify .env
+echo "[4/4] Checking configuration..."
+if [ ! -f "$APP_DIR/.env" ]; then
+    echo "  WARNING: .env file not found! Copy from your local machine."
+else
+    echo "  .env found."
+    if grep -q "TMA_URL" "$APP_DIR/.env"; then
+        echo "  TMA_URL is configured."
+    else
+        echo "  WARNING: TMA_URL not in .env. Add: TMA_URL=https://poly-hunter.com/tma/"
+    fi
+fi
 
-# 6. Install Nginx config
-echo "[6/8] Configuring Nginx..."
-rm -f /etc/nginx/sites-enabled/default
-cp "$DEPLOY_DIR/nginx-polysnap.conf" /etc/nginx/sites-available/polysnap
-ln -sf /etc/nginx/sites-available/polysnap /etc/nginx/sites-enabled/polysnap
-nginx -t
-
-# 7. Start services
-echo "[7/8] Starting services..."
-systemctl restart nginx
-systemctl restart polysnap.service
-
-# 8. Verify
-echo "[8/8] Verifying..."
-sleep 3
-systemctl status polysnap.service --no-pager
 echo ""
 echo "=========================================="
 echo "  Setup Complete!"
-echo "  Your app should be live at:"
-echo "  http://44.207.97.34/"
 echo ""
-echo "  Useful commands:"
-echo "    sudo systemctl status polysnap"
-echo "    sudo systemctl restart polysnap"
-echo "    sudo journalctl -u polysnap -f"
-echo "    tail -f $APP_DIR/logs/gunicorn-error.log"
+echo "  Hosting panel settings:"
+echo "    Launch dir:  $APP_DIR"
+echo "    Command:     unalias python 2>/dev/null; source .venv/bin/activate && bash start.sh"
+echo ""
+echo "  URLs:"
+echo "    Dashboard:   https://poly-hunter.com/"
+echo "    Mini App:    https://poly-hunter.com/tma/"
+echo ""
+echo "  To start Telegram bot (in SSH):"
+echo "    cd $APP_DIR && source .venv/bin/activate"
+echo "    nohup python -m bot.main > logs/bot.log 2>&1 &"
 echo "=========================================="
